@@ -2,15 +2,37 @@
 defmodule Problem do
   def fuel_required(mass) do
       req = Float.floor(mass / 3.0) - 2
-      req |> IO.inspect()
+      "fuel_required(#{mass}) => #{req}" |> IO.puts
       req
+  end
+
+  # memoize?
+  # tail recursion?
+  def fuel_required2(mass) do
+    "fuel_required(#{mass})" |> IO.puts
+    req = inner_fuel_required2(mass)
+    "fuel_required(#{mass}) => #{req}\n" |> IO.puts
+    req
+  end
+
+  def inner_fuel_required2(mass) do
+    req = Float.floor(mass / 3.0) - 2
+    " inner_fuel_required(#{mass}) => #{req}" |> IO.puts
+    if req <= 0 do
+      0
+    else
+      req + inner_fuel_required2(req)
+    end
   end
 
   def run(inputs) do
     inputs |> IO.inspect
-    Enum.sum(for i <- inputs, do: Problem.fuel_required(i)) |> IO.puts()
+    "PART 1" |> IO.puts
+    Enum.sum(for i <- inputs, do: Problem.fuel_required(i)) |> IO.puts
 
-    
+    IO.puts("")
+    "PART 2" |> IO.puts
+    Enum.sum(for i <- inputs, do: Problem.fuel_required2(i)) |> IO.puts
   end
 end
 
@@ -123,4 +145,4 @@ end
 55101
 67926
 """ \
-  # |> String.trim() |> String.split() |> Enum.map(&String.to_integer/1) |> Problem.run()
+  |> String.trim() |> String.split() |> Enum.map(&String.to_integer/1) |> Problem.run()
