@@ -9,6 +9,8 @@ defmodule Problem do
   def run(inputs) do
     inputs |> IO.inspect
     Enum.sum(for i <- inputs, do: Problem.fuel_required(i)) |> IO.puts()
+
+    
   end
 end
 
@@ -120,4 +122,5 @@ end
 135012
 55101
 67926
-""" |> String.trim() |> String.split() |> Enum.map(&String.to_integer/1) |> Problem.run()
+""" \
+  # |> String.trim() |> String.split() |> Enum.map(&String.to_integer/1) |> Problem.run()
