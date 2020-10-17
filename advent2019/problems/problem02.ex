@@ -14,36 +14,37 @@ defmodule Machine do
   def new(prog_list) do
     prog = Map.new(Enum.zip(0..Enum.count(prog_list), prog_list))
     IO.inspect(prog)
-    run(0, prog)
+    instruction(prog[0], 0, prog)
   end
 
-  def run(pc, prog) do
+  def instruction(1, pc, prog) do
+    target = prog[pc+3]
+    left = prog[pc+1]
+    right = prog[pc+2]
+    "prog[#{target}] = prog[#{left}](#{prog[left]}) + prog[#{right}](#{prog[right]})" |> IO.puts
+    # well that could be nicer
+    prog = prog |> Map.put(target, prog[left] + prog[right])
+    decode(pc + 4, prog)
+  end
+
+  def instruction(2, pc, prog) do
+    target = prog[pc+3]
+    left = prog[pc+1]
+    right = prog[pc+2]
+    "prog[#{target}] = prog[#{left}](#{prog[left]}) * prog[#{right}](#{prog[right]})" |> IO.puts
+    prog = prog |> Map.put(target, prog[left] * prog[right])
+    decode(pc + 4, prog)
+  end
+
+  def instruction(99, pc, prog) do
+    "DONE prog[0]=#{prog[0]}" |> IO.puts
+    prog |> Map.values |> IO.inspect
+  end
+
+  def decode(pc, prog) do
     opcode = prog[pc]
     "pc=#{pc} opcode=#{opcode}" |> IO.puts
-    # could do this with method matching as well, but let's start here
-    cond do
-      opcode == 1 ->  # add
-        target = prog[pc+3]
-        left = prog[pc+1]
-        right = prog[pc+2]
-        "prog[#{target}] = prog[#{left}](#{prog[left]}) + prog[#{right}](#{prog[right]})" |> IO.puts
-        # well that could be nicer
-        prog = prog |> Map.put(target, prog[left] + prog[right])
-        run(pc + 4, prog)
-      opcode == 2 ->  # multiply
-        "MULTIPLY" |> IO.puts
-        target = prog[pc+3]
-        left = prog[pc+1]
-        right = prog[pc+2]
-        "prog[#{target}] = prog[#{left}](#{prog[left]}) * prog[#{right}](#{prog[right]})" |> IO.puts
-        prog = prog |> Map.put(target, prog[left] * prog[right])
-        run(pc + 4, prog)
-      opcode == 99 ->
-        "DONE prog[0]=#{prog[0]}" |> IO.puts
-        prog |> Map.values |> IO.inspect
-      true ->
-        "OOPS" |> IO.puts
-    end
+    instruction(opcode, pc, prog)
   end
 end
 
