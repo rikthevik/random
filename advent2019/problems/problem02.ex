@@ -14,29 +14,29 @@ defmodule Machine do
   def new(prog_list) do
     prog = Map.new(Enum.zip(0..Enum.count(prog_list), prog_list))
     # IO.inspect(prog)
-    decode_next(0, prog)
+    prog |> decode_next(0)
   end
 
-  def instruction(1, {left, right, target}, pc, prog) do
-    prog = prog |> Map.put(target, prog[left] + prog[right])
-    decode_next(pc+4, prog)
+  def instruction(prog, 1, {left, right, target}) do
+    prog |> Map.put(target, prog[left] + prog[right])
   end
 
-  def instruction(2, {left, right, target}, pc, prog) do
-    prog = prog |> Map.put(target, prog[left] * prog[right])
-    decode_next(pc+4, prog)
+  def instruction(prog, 2, {left, right, target}) do
+    prog |> Map.put(target, prog[left] * prog[right])
   end
 
-  def decode_next(pc, prog) do
+  def decode_next(prog, pc) do
     opcode = prog[pc]
     # "pc=#{pc} opcode=#{opcode}" |> IO.puts
     case opcode do
       _ when opcode < 99 ->
         # long instructions?
-        instruction(opcode, {prog[pc+1], prog[pc+2], prog[pc+3]}, pc, prog)
+        prog
+        |> instruction(opcode, {prog[pc+1], prog[pc+2], prog[pc+3]})
+        |> decode_next(pc+4)
       99 ->
         # "DONE prog[0]=#{prog[0]}" |> IO.puts
-        prog[0]  
+        prog[0]
       end
   end
 end
