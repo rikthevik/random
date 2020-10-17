@@ -12,6 +12,9 @@ left = """
 
 defmodule Machine do
   def new(prog_list) do
+    # Take the list of program memory and put it in a map.  
+    # Afaict we don't really get direct-access arrays.
+    # Zip together a list of addresses (0..whatever) with the program contents.
     prog = Map.new(Enum.zip(0..Enum.count(prog_list), prog_list))
     # IO.inspect(prog)
     prog |> decode_next(0)
