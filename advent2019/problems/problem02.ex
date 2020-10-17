@@ -29,14 +29,14 @@ defmodule Machine do
 
   def decode_next(pc, prog) do
     opcode = prog[pc]
-    "pc=#{pc} opcode=#{opcode}" |> IO.puts
+    # "pc=#{pc} opcode=#{opcode}" |> IO.puts
     case opcode do
       _ when opcode < 99 ->
         # long instructions?
         instruction(opcode, {prog[pc+1], prog[pc+2], prog[pc+3]}, pc, prog)
       99 ->
-        "DONE prog[0]=#{prog[0]}" |> IO.puts
-        prog[0]    
+        # "DONE prog[0]=#{prog[0]}" |> IO.puts
+        prog[0]  
       end
   end
 end
@@ -63,12 +63,14 @@ defmodule Problem do
     for prog_list <- inputs do
       for noun <- 0..1 do
         for verb <- 0..1 do
+          noun = 12
+          verb = 2
           # [prog_list[0]] + [noun, verb] + prog_list[3:] -- ???
           new_prog_list = [prog_list |> Enum.at(0)] ++ [noun, verb] ++ (prog_list |> Enum.slice(3, 100000))
           # new_prog_list |> IO.inspect
-          result = 12
-          # result = Machine.new(new_prog_list)
-          "noun=#{noun} verb=#{verb} result=#{result}" |> IO.puts
+          result = Machine.new(new_prog_list)
+          calc = 100 * noun + verb
+          "noun=#{noun} verb=#{verb} result=#{result} calc=#{calc}" |> IO.puts
         end
       end
     end
