@@ -1,4 +1,9 @@
 
+input = """
+123
+456
+"""
+
 defmodule Problem do
 
   def parse(line) do
@@ -19,10 +24,7 @@ defmodule Problem do
   end
 end
 
-"""
-123
-456
-"""
+input
   |> String.trim 
   |> String.split 
   |> Enum.map(&Problem.parse/1)
