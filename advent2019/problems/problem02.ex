@@ -64,10 +64,8 @@ defmodule Problem do
     IO.puts("")
     "PART 2" |> IO.puts
     for prog_list <- inputs do
-      for noun <- 0..1 do
-        for verb <- 0..1 do
-          noun = 12
-          verb = 2
+      for noun <- 0..99 do
+        for verb <- 0..99 do
           # [prog_list[0]] + [noun, verb] + prog_list[3:] -- ???
           new_prog_list = [prog_list |> Enum.at(0)] ++ [noun, verb] ++ (prog_list |> Enum.slice(3, 100000))
           # new_prog_list |> IO.inspect
