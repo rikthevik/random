@@ -44,20 +44,38 @@ defmodule Problem do
   def parse_line(line) do
     line 
     |> String.split(",")
-    |> Enum.map(&parse_chunk/1)
-    
-    
+    |> Enum.map(&parse_chunk/1)    
   end
 
   def parse_chunk(chunk) do
     dir = chunk |> String.at(0) |> String.downcase() |> String.to_atom()
     length = chunk |> String.slice(1..100) |> String.to_integer()
-    {dir, length}
+    case dir do
+      :u -> Point.new(0, +length)
+      :d -> Point.new(0, -length)
+      :l -> Point.new(-length, 0)
+      :r -> Point.new(+length, 0)
+    end
+  end
+
+  def wire_to_lines(wire) do
+    step(Point.new(0, 0), wire)
+  end
+
+  def step(p, [next|rest]) do
+    # today we are fancy recursive people
+    continued = p |> Point.add(next)
+    [Line.new(p, continued) | step(continued, rest)]
+  end
+  def step(p, []) do
+    []
   end
 
   def run(inputs) do
     "INPUT" |> IO.puts
     inputs |> IO.inspect
+    wire1 = inputs |> Enum.at(0)
+    wire2 = inputs |> Enum.at(1)
 
     # here = Point.new(0.0, 0.0)
   end
@@ -87,11 +105,19 @@ defmodule Tests do
   end
 
   test "parse chunk" do
-    assert "R123" |> Problem.parse_chunk() == {:r, 123}
+    assert "R123" |> Problem.parse_chunk() == Point.new(123, 0)
   end
 
   test "parse line" do
-    assert "R123,L23" |> Problem.parse_line() == [{:r, 123}, {:l, 23}]
+    assert "R123,U23" |> Problem.parse_line() == [Point.new(123, 0), Point.new(0, 23)]
+  end
+
+  test "wire to lines" do 
+    wire = [Point.new(123, 0), Point.new(0, 23)]
+    assert wire |> Problem.wire_to_lines() == [
+      Line.new(Point.new(0, 0), Point.new(123, 0)),
+      Line.new(Point.new(123, 0), Point.new(123, 23)),
+    ]
   end
 
   # test "sample input 1" do
