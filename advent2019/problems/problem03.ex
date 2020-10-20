@@ -13,7 +13,7 @@ defmodule Point do
   end
 
   def mdist(p) do
-    p.x + p.y
+    Kernel.abs(p.x) + Kernel.abs(p.y)
   end
 
   def add(a, b) do
@@ -59,18 +59,16 @@ defmodule Problem do
   end
 
   def wire_to_lines(wire) do
-    step(Point.new(0, 0), wire)
+    add_point_to_lines(Point.new(0, 0), wire)
   end
 
-  def step(p, [next|rest]) do
+  def add_point_to_lines(p, [next|rest]) do
     # today we are fancy recursive people
     continued = p |> Point.add(next)
-    [Line.new(p, continued) | step(continued, rest)]
+    [Line.new(p, continued) | add_point_to_lines(continued, rest)]
   end
-  def step(p, []) do
-    []
-  end
-
+  def add_point_to_lines(p, []) do [] end
+    
   def run(inputs) do
     "INPUT" |> IO.puts
     inputs |> IO.inspect
@@ -97,6 +95,9 @@ defmodule Tests do
     assert p.x == 1.0
     assert p.y == 3.0
     assert p |> Point.add(Point.new(2, 1)) == Point.new(3, 4)
+    assert Point.new(2, 3) |> Point.mdist() == 5
+    assert Point.new(-2, 3) |> Point.mdist() == 5
+    assert Point.new(-2, -3) |> Point.mdist() == 5
   end
 
   test "lines do line things" do
