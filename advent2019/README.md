@@ -6,10 +6,11 @@ https://adventofcode.com/2019/
 
 ## Running Scripts
 
-This was the simplest way I could get this working.
+Originally I was using `mix run`, but it looks like `mix test` is a better fit.
+Let's try a bottom-up method of writing and testing simple functions.
 
 ```
-mix run problems/problem01.ex
+mix test problems/problem01.ex
 ```
 
 
