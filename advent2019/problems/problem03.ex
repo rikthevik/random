@@ -94,17 +94,19 @@ defmodule Problem do
   def part2(inputs) do
     # now we're looking for the overlap with the lowest combined signal delay
     inputs |> IO.inspect
-    wire1 = inputs |> Enum.at(0) |> Problem.moves_to_wire
+    
     # if a wire is a list of steps the signal goes through, we can zip it with a range
-    # to calculate the delay.  Stored in a Map of {x,y}=>Delay
+    # to calculate the delay.  Stored in a Map of {x,y}=>delay
+    wire1 = inputs |> Enum.at(0) |> Problem.moves_to_wire
     wire1_delays = Map.new(Enum.zip(wire1, 1..Enum.count(wire1)))
     wire2 = inputs |> Enum.at(1) |> Problem.moves_to_wire
-    
     wire2_delays = Map.new(Enum.zip(wire2, 1..Enum.count(wire2)))
+
     overlaps = MapSet.new(wire1) |> MapSet.intersection(MapSet.new(wire2)) |> IO.inspect
     signal_delays = for o <- overlaps do
       delay1 = Map.fetch!(wire1_delays, o)
       delay2 = Map.fetch!(wire2_delays, o)
+      # could be shorter - the output was helpful for debugging
       "#{inspect o} => #{delay1} + #{delay2} = #{delay1+delay2}" |> IO.puts
       delay1 + delay2
     end
