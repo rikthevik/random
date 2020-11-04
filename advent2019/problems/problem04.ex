@@ -17,16 +17,14 @@ defmodule Problem do
 
   def has_only_2_same_digits_adjacent?(chars) do
     groups(chars)
-    |> IO.inspect
-    |> Enum.any?(fn a -> List.count(a) == 2 end)
+    |> Enum.any?(fn a -> Enum.count(a) == 2 end)
   end
 
   # blech
   def groups(chars) do
-    IO.puts("")
+    # IO.puts("")
     [c|rest] = chars
-    g = abc(c, rest, [c], [])
-    g |> IO.inspect
+    abc(c, rest, [c], [])
   end
 
   # well this took me awhile to get right
@@ -34,15 +32,15 @@ defmodule Problem do
   # look at a char and build up the current string and append into the accumulator list
   # i'm gonna sleep on this one
   def abc(c, [c|rest], curr, acc) do
-    "1abc(#{c}, c=#{c}|#{inspect rest} curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
+    # "1abc(#{c}, c=#{c}|#{inspect rest} curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
     abc(c, rest, [c] ++ curr, acc)  # append to curr when you get the same char
   end
-  def abc(c, [d|rest], curr, acc) do
-    "2abc(#{c}, d=#{d}|#{inspect rest} curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
+  def abc(_c, [d|rest], curr, acc) do
+    # "2abc(#{c}, d=#{d}|#{inspect rest} curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
     abc(d, rest, [d], acc ++ [curr])  # append curr to acc when you hit a different character
   end
-  def abc(c, [], curr, acc) do
-    "3abc(#{c}, [] curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
+  def abc(_c, [], curr, acc) do
+    # "3abc(#{c}, [] curr=#{inspect curr} acc=#{inspect acc}" |> IO.puts
     acc ++ [curr]   # append curr to acc when you hit the end of the list
   end
   
@@ -53,7 +51,7 @@ defmodule Problem do
 
   def is_password_part2?(i) do
     chars = i |> Integer.to_charlist
-    is_ascending?(chars) and has_repeat?(chars)
+    is_ascending?(chars) and has_repeat?(chars) and has_only_2_same_digits_adjacent?(chars)
   end
 
   def part1(range) do
@@ -92,7 +90,13 @@ defmodule Tests do
     assert '12' |> Problem.groups == ['1', '2']
     assert '111223' |> Problem.groups == ['111', '22', '3']
     assert 111122 |> Problem.is_password_part2? == true
-    assert 111223 |> Problem.is_password_part2? == false
+    assert 111223 |> Problem.is_password_part2? == true
+    assert 111222 |> Problem.is_password_part2? == false
+  end
+
+  test "part 2" do
+    out = 347312..805915 |> Problem.part2
+    "part2=#{out}" |> IO.puts
   end
 end
 
