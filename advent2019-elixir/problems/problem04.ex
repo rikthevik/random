@@ -10,16 +10,6 @@ defmodule Problem do
     |> Enum.all?(fn {a, b} -> a <= b end)
   end
 
-  def has_repeat?(chars) do
-    Enum.zip(chars, chars |> Enum.slice(1, 5))
-    |> Enum.any?(fn {a, b} -> a == b end)
-  end
-
-  def has_only_2_same_digits_adjacent?(chars) do
-    groups(chars)
-    |> Enum.any?(fn a -> Enum.count(a) == 2 end)
-  end
-
   # blech
   def groups(chars) do
     # IO.puts("")
@@ -46,12 +36,12 @@ defmodule Problem do
   
   def is_password?(i) do
     chars = i |> Integer.to_charlist
-    is_ascending?(chars) and has_repeat?(chars)
+    is_ascending?(chars) and groups(chars) |> Enum.any?(fn a-> Enum.count(a) >= 2 end)
   end
 
   def is_password_part2?(i) do
     chars = i |> Integer.to_charlist
-    is_ascending?(chars) and has_repeat?(chars) and has_only_2_same_digits_adjacent?(chars)
+    is_ascending?(chars) and groups(chars) |> Enum.any?(fn a-> Enum.count(a) == 2 end)
   end
 
   def part1(range) do
