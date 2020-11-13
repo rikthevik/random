@@ -10,13 +10,17 @@ defmodule Problem do
     |> Enum.all?(fn {a, b} -> a <= b end)
   end
 
-  # blech
+  # Well this is a lot simpler than the old method.
+  def groups([]) do [] end
   def groups(chars) do
-    # IO.puts("")
-    [c|rest] = chars
-    abc(c, rest, [c], [])
+    c = chars |> Enum.at(0)
+    # Split the string until we get a different character or run out.
+    {s, rest} = chars |> Enum.split_while(fn a -> a == c end)
+    # Return what we found and recurse into the rest of the string.
+    [s] ++ groups(rest)
   end
 
+  
   # well this took me awhile to get right
   # not sure how "right" this feels
   # look at a char and build up the current string and append into the accumulator list
