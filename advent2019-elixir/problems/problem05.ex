@@ -19,30 +19,32 @@ defmodule Machine do
     m.output |> IO.inspect
   end
 
-  def instruction(m, 1, {left, right, target}) do
-    # add left and right and store in target address
-    # m |> Map.put(target, prog[left] + prog[right])
+  def read(m, val, :imm) do
+    val
   end
-  def instruction(m, 2, {left, right, target}) do
-    # multiply left and right and store in target address
-    # m |> Map.put(target, prog[left] * prog[right])
-  end
-  def instruction(m, 3, {target}) do
-    # consume input and store in target address
-  end
-  def instruction(m, 4, {addr}) do
-    # read from addr and output
+  def read(m, val, :pos) do
+    m.prog[val]
   end
 
-  def read(m, 0, value) do
-    # positional mode
-    value
-  end
-  def read(m, 1, addr) do
-    # immediate mode
-    m.prog[addr]
+  def read_read_write(m, modes, operation_func) do
+    left_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    right_val = m |> Machine.read(m.prog[m.pc+2], modes[1])
+    target_addr = m.prog[m.pc+3]
+    result = operation_func.(left_val, right_val)
+    %{m|
+      pc: m.pc + 4,
+      prog: m.prog |> Map.put(target_addr, result)
+    }
   end
 
+  def instruction(m, 1, modes) do   # add(left, right, target_addr)
+    m |> read_read_write(modes, fn (left, right) -> left + right end)
+  end
+  def instruction(m, 2, modes) do   # mult(left, right, target_addr)
+    m |> read_read_write(modes, fn (left, right) -> left * right end)
+  end
+  
+  
   def mode_for_param(s) do
     case s do
       0 -> :pos
@@ -50,25 +52,25 @@ defmodule Machine do
     end
   end
 
-  # :math.pow() is all about floats and i don't want to convert
+  # :math.pow() is all about floats and i don't want to convert back
+  # and this looks like CMPT 340 homework  :)
   def ipow(i, 0) do 1 end
   def ipow(i, exponent) when exponent > 0 do
     i * ipow(i, exponent-1)
   end
 
   def base10_digit(i, digit_idx) do
+    # This is a lot of cpu time for me not to repeat a few digits.
     m = ipow(10, digit_idx)
     i |> Integer.mod(10 * m) |> Integer.floor_div(m)
   end
 
-  def bust_inst(inst) do
-    a = inst |> base10_digit(4) |> mode_for_param()
-    b = inst |> base10_digit(3) |> mode_for_param()
-    c = inst |> base10_digit(2) |> mode_for_param()
+  def find_opcode_and_modes(inst) do
     opcode = inst |> Integer.mod(100)
-    "#{a} #{b} #{c} op=#{opcode}" |> IO.puts
-    {opcode, [a, b, c]}
-    |> IO.inspect
+    modes = for mode_idx <- 4..2, into: %{} do
+      {mode_idx - 2, inst |> base10_digit(mode_idx) |> mode_for_param()}
+    end
+    {opcode, modes}
   end
 
   def decode_next(m) do
@@ -77,19 +79,16 @@ defmodule Machine do
     inst = m.prog[m.pc]
     "pc=#{m.pc} inst=#{inst}" |> IO.puts
 
-    bust_inst(inst)
-
-  #   case chunk do
-  #     _ when opcode < 99 ->
-  #       # long instructions?
-  #       prog
-  #       |> instruction(opcode, {prog[pc+1], prog[pc+2], prog[pc+3]})
-  #       |> decode_next(pc+4)
-  #     99 ->
-  #       # "DONE prog[0]=#{prog[0]}" |> IO.puts
-  #       prog[0]
-  #     end
-    m
+    {opcode, modes} = find_opcode_and_modes(inst)
+    "OPCODE #{opcode} #{inspect modes}" |> IO.puts
+    
+    if opcode == 99 do
+      m
+    else
+      m 
+      |> instruction(opcode, modes) 
+      |> decode_next()
+    end
   end
 end
 
@@ -143,18 +142,39 @@ end
 
 defmodule Tests do 
   use ExUnit.Case
-  test "problem 3 still works" do    
-    test_input = """
-1,12,2,3,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,2,27,13,31,1,10,31,35,1,10,35,39,2,39,6,43,1,43,5,47,2,10,47,51,1,5,51,55,1,55,13,59,1,59,9,63,2,9,63,67,1,6,67,71,1,71,13,75,1,75,10,79,1,5,79,83,1,10,83,87,1,5,87,91,1,91,9,95,2,13,95,99,1,5,99,103,2,103,9,107,1,5,107,111,2,111,9,115,1,115,6,119,2,13,119,123,1,123,5,127,1,127,9,131,1,131,10,135,1,13,135,139,2,9,139,143,1,5,143,147,1,13,147,151,1,151,2,155,1,10,155,0,99,2,14,0,0
-"""
-    test_input = "1002,4,3,4,33"
-    test_input
+
+  def prepare_input_string(input_string) do
+    input_string
     |> String.trim 
     |> String.split 
     |> Enum.map(fn i -> i |> String.trim |> Problem.parse end)
     |> Enum.at(0)
-    |> Problem.problem3
-    # |> IO.inspect
   end
+
+  
+  test "both read modes work" do
+    test_input = "1002,4,3,4,33"
+    test_input
+    |> prepare_input_string
+    |> Machine.new([])
+  end
+
+  test "negative numbers work" do
+    test_input = "1101,100,-1,4,0"
+    test_input
+    |> prepare_input_string
+    |> Machine.new([])
+  end
+
+  test "problem 3 still works" do    
+    test_input = """
+1,12,2,3,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,2,27,13,31,1,10,31,35,1,10,35,39,2,39,6,43,1,43,5,47,2,10,47,51,1,5,51,55,1,55,13,59,1,59,9,63,2,9,63,67,1,6,67,71,1,71,13,75,1,75,10,79,1,5,79,83,1,10,83,87,1,5,87,91,1,91,9,95,2,13,95,99,1,5,99,103,2,103,9,107,1,5,107,111,2,111,9,115,1,115,6,119,2,13,119,123,1,123,5,127,1,127,9,131,1,131,10,135,1,13,135,139,2,9,139,143,1,5,143,147,1,13,147,151,1,151,2,155,1,10,155,0,99,2,14,0,0
+"""    
+    test_input
+    |> prepare_input_string
+    |> Machine.new([])
+  end
+
+
 end
 
