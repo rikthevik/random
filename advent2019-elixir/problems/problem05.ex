@@ -74,7 +74,8 @@ defmodule Machine do
     [input_val|remaining_input] = m.input
     %{m|
       pc: m.pc + 2,
-      prog: m.prog |> Map.put(target_addr, input_val)
+      prog: m.prog |> Map.put(target_addr, input_val),
+      input: remaining_input
     }
   end
   def instruction(m, 4, modes) do   # write_output(arg)
