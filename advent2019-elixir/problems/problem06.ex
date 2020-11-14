@@ -1228,7 +1228,7 @@ SKV)YWS
 1LV)GFH
     """
     assert input |> Problem.part1 == 162816
-    assert input |> Problem.part2 == 123
+    assert input |> Problem.part2 == 304
   end
 
 end
