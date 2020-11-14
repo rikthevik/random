@@ -14,6 +14,14 @@ defmodule Util do
     m = ipow(10, digit_idx)
     i |> Integer.mod(10 * m) |> Integer.floor_div(m)
   end
+
+  # Pulled this from somewhere online.
+  # Considering I'd use itertools in python, I think that's okay.
+  def permutations([]) do [[]] end
+  def permutations(list) do
+    for head <- list, tail <- permutations(list -- [head]), do: [head | tail]
+  end
+
 end
 
 defmodule Machine do
@@ -116,7 +124,7 @@ defmodule Machine do
   def decode_next(m) do
     inst = m.prog[m.pc]
     {opcode, modes} = find_opcode_and_modes(inst)
-    "PC=#{m.pc} OPCODE #{opcode} #{inspect modes}" |> IO.puts
+    # "PC=#{m.pc} OPCODE #{opcode} #{inspect modes}" |> IO.puts
     if opcode == 99 do
       m
     else
@@ -136,21 +144,26 @@ defmodule Problem do
 
   def run_stage(input, _prog_list, []) do input end
   def run_stage(input, prog_list, [phase|phases]) do
+    # Supply the phase and the input to the program as per the spec.
+    # Run the program and get the output.
+    # Send the output as the input to the next stage.
+    # .. is that it? ..
     output = prog_list 
     |> Machine.new([phase, input])
     |> Enum.at(0)
-    "OUTPUT = #{output}" |> IO.puts
     run_stage(output, prog_list, phases)
   end
 
   def part1(prog_list) do
-
+    for phases <- Util.permutations(Enum.to_list(0..4)) do
+      attempt(prog_list, phases)
+    end |> Enum.max()
   end
 
   def attempt(prog_list, phases) do
-    "STAGE 0" |> IO.puts
-    run_stage(0, prog_list, phases)
-    |> IO.inspect
+    output = run_stage(0, prog_list, phases)
+    "attempt: #{inspect phases} => #{output}" |> IO.puts
+    output
   end
 end
 
@@ -165,11 +178,28 @@ defmodule Tests do
     |> Enum.at(0)
   end
 
-  test "both read modes work" do
+  test "example program 1" do
     prog_string = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
     prog_list = prog_string |> prepare_prog_string
     assert Problem.attempt(prog_list, [4,3,2,1,0]) == 43210
+    assert Problem.part1(prog_list) == 43210
   end
+
+  test "example program 2" do
+    prog_string = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0"
+    prog_list = prog_string |> prepare_prog_string
+    assert Problem.attempt(prog_list, [0,1,2,3,4]) == 54321
+    assert Problem.part1(prog_list) == 54321
+  end
+
+  test "example program 3" do
+    prog_string = "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0"
+    prog_list = prog_string |> prepare_prog_string
+    assert Problem.attempt(prog_list, [1,0,4,3,2]) == 65210
+    assert Problem.part1(prog_list) == 65210
+  end
+
+  
 
 end
 
