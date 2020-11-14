@@ -73,7 +73,7 @@ defmodule Problem do
     # Both of these paths end up at COM, so let's reverse them,
     # keep pulling off elements until one is different and stop there.
     # The remaining (different) chunks of the path are how long it takes to intersect.
-    
+
     my_path = tree |> Tree.path_to_node("YOU", "COM") |> Enum.reverse
     santa_path = tree |> Tree.path_to_node("SAN", "COM") |> Enum.reverse
   
@@ -156,7 +156,7 @@ I)SAN
   end
 
   test "part 1 for real" do
-    output = """
+    input = """
     FGY)61Z
 2BN)LM7
 QXY)TVB
@@ -1227,8 +1227,8 @@ SKV)YWS
 3ZK)RSW
 1LV)GFH
     """
-    # |> Problem.part1
-    assert 162816 == 162816
+    assert input |> Problem.part1 == 162816
+    assert input |> Problem.part2 == 123
   end
 
 end
