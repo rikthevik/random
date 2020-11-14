@@ -52,10 +52,10 @@ defmodule Machine do
   end
 
   def instruction(m, 1, modes) do   # add(left, right, target_addr)
-    m |> two_operand_alu(modes, fn (left, right) -> left + right end)
+    m |> two_operand_alu(modes, fn (l, r) -> l + r end)
   end
   def instruction(m, 2, modes) do   # mult(left, right, target_addr)
-    m |> two_operand_alu(modes, fn (left, right) -> left * right end)
+    m |> two_operand_alu(modes, fn (l, r) -> l * r end)
   end
   def instruction(m, 3, modes) do   # read_input(target_addr)
     target_addr = m.prog[m.pc+1]
@@ -74,7 +74,7 @@ defmodule Machine do
   end
 
   def instruction(m, 8, modes) do   # store1_if_equal(left, right, target_addr)
-    m |> two_operand_alu(modes, fn (left, right) -> left == right and 1 or 0 end)
+    m |> two_operand_alu(modes, fn (l, r) -> if l == r, do: 1, else: 0 end)
   end
 
   def mode_for_param(s) do
@@ -188,10 +188,10 @@ defmodule Tests do
     assert [13294380] == diagnostic
   end
 
-  test "test jump equal 8" do 
-    assert 1 == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([8])
-    assert 0 == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([7])
-    assert 0 == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([9])
+  test "test equal 8" do 
+    assert [1] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([8])
+    assert [0] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([7])
+    assert [0] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([9])
   end
 
   test "problem 3 still works" do    
