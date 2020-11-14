@@ -73,7 +73,10 @@ defmodule Machine do
     }
   end
 
-  def instruction(m, 8, modes) do   # store1_if_equal(left, right, target_addr)
+  def instruction(m, 7, modes) do   # test_lt(left, right, target_addr)
+    m |> two_operand_alu(modes, fn (l, r) -> if l < r, do: 1, else: 0 end)
+  end
+  def instruction(m, 8, modes) do   # test_eq(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> if l == r, do: 1, else: 0 end)
   end
 
@@ -189,9 +192,15 @@ defmodule Tests do
   end
 
   test "test equal 8" do 
-    assert [1] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([8])
     assert [0] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([7])
+    assert [1] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([8])
     assert [0] == "3,9,8,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([9])
+  end
+
+  test "tess lt 8" do
+    assert [1] == "3,9,7,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([7])
+    assert [0] == "3,9,7,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([8])
+    assert [0] == "3,9,7,9,10,9,4,9,99,-1,8" |> prepare_prog_string |> Machine.new([9])
   end
 
   test "problem 3 still works" do    
