@@ -31,7 +31,10 @@ defmodule Machine do
     }
     m |> IO.inspect
     m = m |> Machine.decode_next()
-    m.output |> IO.inspect
+
+    m.output 
+    |> Enum.reverse
+    |> IO.inspect
   end
 
   def read(m, val, :read_mode_immediate) do
@@ -58,7 +61,22 @@ defmodule Machine do
   def instruction(m, 2, modes) do   # mult(left, right, target_addr)
     m |> read_read_write(modes, fn (left, right) -> left * right end)
   end
-    
+  def instruction(m, 3, modes) do   # read_input(target_addr)
+    target_addr = m.prog[m.pc+1]
+    [input_val|remaining_input] = m.input
+    %{m|
+      pc: m.pc + 2,
+      prog: m.prog |> Map.put(target_addr, input_val)
+    }
+  end
+  def instruction(m, 4, modes) do   # write_output(arg)
+    val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    %{m|
+      pc: m.pc + 2,
+      output: [val|m.output]
+    }
+  end
+
   def mode_for_param(s) do
     case s do
       0 -> :read_mode_positional
@@ -101,13 +119,7 @@ defmodule Problem do
   end
 
   def problem3(prog_list) do
-    "INPUT" |> IO.puts
-    prog_list |> IO.inspect
-    m = Machine.new(prog_list, [])
-  end
-
-  def something() do
-
+    # might just leave this alone for now
     IO.puts("")
     "PART 1" |> IO.puts
     # for prog_list <- inputs do
@@ -144,36 +156,37 @@ end
 defmodule Tests do 
   use ExUnit.Case
 
-  def prepare_input_string(input_string) do
-    input_string
+  def prepare_prog_string(prog_string) do
+    prog_string
     |> String.trim 
     |> String.split 
     |> Enum.map(fn i -> i |> String.trim |> Problem.parse end)
     |> Enum.at(0)
   end
 
-  
   test "both read modes work" do
-    test_input = "1002,4,3,4,33"
-    test_input
-    |> prepare_input_string
+    "1002,4,3,4,33"
+    |> prepare_prog_string
     |> Machine.new([])
   end
 
   test "negative numbers work" do
-    test_input = "1101,100,-1,4,0"
-    test_input
-    |> prepare_input_string
+    "1101,100,-1,4,0"
+    |> prepare_prog_string
     |> Machine.new([])
   end
 
+  test "input output works" do
+    output = "3,0,4,0,99"
+    |> prepare_prog_string
+    |> Machine.new([123])
+    assert output == [123]
+  end
+
   test "problem 3 still works" do    
-    test_input = """
-1,12,2,3,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,2,27,13,31,1,10,31,35,1,10,35,39,2,39,6,43,1,43,5,47,2,10,47,51,1,5,51,55,1,55,13,59,1,59,9,63,2,9,63,67,1,6,67,71,1,71,13,75,1,75,10,79,1,5,79,83,1,10,83,87,1,5,87,91,1,91,9,95,2,13,95,99,1,5,99,103,2,103,9,107,1,5,107,111,2,111,9,115,1,115,6,119,2,13,119,123,1,123,5,127,1,127,9,131,1,131,10,135,1,13,135,139,2,9,139,143,1,5,143,147,1,13,147,151,1,151,2,155,1,10,155,0,99,2,14,0,0
-"""    
-    test_input
-    |> prepare_input_string
-    |> Machine.new([])
+    # "1,12,2,3,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,2,27,13,31,1,10,31,35,1,10,35,39,2,39,6,43,1,43,5,47,2,10,47,51,1,5,51,55,1,55,13,59,1,59,9,63,2,9,63,67,1,6,67,71,1,71,13,75,1,75,10,79,1,5,79,83,1,10,83,87,1,5,87,91,1,91,9,95,2,13,95,99,1,5,99,103,2,103,9,107,1,5,107,111,2,111,9,115,1,115,6,119,2,13,119,123,1,123,5,127,1,127,9,131,1,131,10,135,1,13,135,139,2,9,139,143,1,5,143,147,1,13,147,151,1,151,2,155,1,10,155,0,99,2,14,0,0"
+    # |> prepare_prog_string
+    # |> Machine.new([])
   end
 
 
