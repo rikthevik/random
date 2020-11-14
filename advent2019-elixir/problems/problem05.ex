@@ -50,6 +50,18 @@ defmodule Machine do
       prog: m.prog |> Map.put(target_addr, result)
     }
   end
+  def jump_if_condition(m, modes, condition_func) do
+    compare_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    new_pc = m |> Machine.read(m.prog[m.pc+2], modes[1])
+    if condition_func.(compare_val) do
+      %{m|
+        pc: new_pc}
+    else
+      %{m|
+        pc: m.pc+3}
+    end
+  end
+
 
   def instruction(m, 1, modes) do   # add(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> l + r end)
@@ -72,16 +84,11 @@ defmodule Machine do
       output: [val|m.output]
     }
   end
+  def instruction(m, 5, modes) do   # jump_if_true(comparison, new_pc)
+    m |> jump_if_condition(modes, fn (val) -> val != 0 end)
+  end
   def instruction(m, 6, modes) do   # jump_if_false(comparison, new_pc)
-    val = m |> Machine.read(m.prog[m.pc+1], modes[0])
-    new_pc = m |> Machine.read(m.prog[m.pc+2], modes[1])
-    if val == 0 do
-      %{m|
-        pc: new_pc}
-    else
-      %{m|
-        pc: m.pc+3}
-    end
+    m |> jump_if_condition(modes, fn (val) -> val == 0 end)
   end
   def instruction(m, 7, modes) do   # test_lt(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> if l < r, do: 1, else: 0 end)
