@@ -73,6 +73,10 @@ defmodule Machine do
     }
   end
 
+  def instruction(m, 8, modes) do   # store1_if_equal(left, right, target_addr)
+    m |> two_operand_alu(modes, fn (left, right) -> left == right and 1 or 0 end)
+  end
+
   def mode_for_param(s) do
     case s do
       0 -> :read_positional
