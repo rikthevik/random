@@ -1,6 +1,21 @@
 
 # I feel like reading the spec was the hard part here.
 
+defmodule Util do
+  # :math.pow() is all about floats and i don't want to convert back
+  # and this looks like CMPT 340 homework  :)
+  def ipow(i, 0) do 1 end
+  def ipow(i, exponent) when exponent > 0 do
+    i * ipow(i, exponent-1)
+  end
+
+  def base10_digit(i, digit_idx) do
+    # This is a lot of cpu time for me not to repeat a few digits.
+    m = ipow(10, digit_idx)
+    i |> Integer.mod(10 * m) |> Integer.floor_div(m)
+  end
+end
+
 defmodule Machine do
   defstruct [:pc, :prog, :input, :output]
 
@@ -19,10 +34,10 @@ defmodule Machine do
     m.output |> IO.inspect
   end
 
-  def read(m, val, :imm) do
+  def read(m, val, :read_mode_immediate) do
     val
   end
-  def read(m, val, :pos) do
+  def read(m, val, :read_mode_positional) do
     m.prog[val]
   end
 
@@ -43,32 +58,18 @@ defmodule Machine do
   def instruction(m, 2, modes) do   # mult(left, right, target_addr)
     m |> read_read_write(modes, fn (left, right) -> left * right end)
   end
-  
-  
+    
   def mode_for_param(s) do
     case s do
-      0 -> :pos
-      1 -> :imm
+      0 -> :read_mode_positional
+      1 -> :read_mode_immediate
     end
-  end
-
-  # :math.pow() is all about floats and i don't want to convert back
-  # and this looks like CMPT 340 homework  :)
-  def ipow(i, 0) do 1 end
-  def ipow(i, exponent) when exponent > 0 do
-    i * ipow(i, exponent-1)
-  end
-
-  def base10_digit(i, digit_idx) do
-    # This is a lot of cpu time for me not to repeat a few digits.
-    m = ipow(10, digit_idx)
-    i |> Integer.mod(10 * m) |> Integer.floor_div(m)
   end
 
   def find_opcode_and_modes(inst) do
     opcode = inst |> Integer.mod(100)
     modes = for mode_idx <- 4..2, into: %{} do
-      {mode_idx - 2, inst |> base10_digit(mode_idx) |> mode_for_param()}
+      {mode_idx - 2, inst |> Util.base10_digit(mode_idx) |> mode_for_param()}
     end
     {opcode, modes}
   end
