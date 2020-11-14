@@ -44,7 +44,7 @@ defmodule Machine do
     m.prog[val]
   end
 
-  def read_read_write(m, modes, operation_func) do
+  def two_operand_alu(m, modes, operation_func) do
     left_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
     right_val = m |> Machine.read(m.prog[m.pc+2], modes[1])
     target_addr = m.prog[m.pc+3]
@@ -56,10 +56,10 @@ defmodule Machine do
   end
 
   def instruction(m, 1, modes) do   # add(left, right, target_addr)
-    m |> read_read_write(modes, fn (left, right) -> left + right end)
+    m |> two_operand_alu(modes, fn (left, right) -> left + right end)
   end
   def instruction(m, 2, modes) do   # mult(left, right, target_addr)
-    m |> read_read_write(modes, fn (left, right) -> left * right end)
+    m |> two_operand_alu(modes, fn (left, right) -> left * right end)
   end
   def instruction(m, 3, modes) do   # read_input(target_addr)
     target_addr = m.prog[m.pc+1]
