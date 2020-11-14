@@ -11,7 +11,6 @@ defmodule Tree do
     # list of edges, we need to key using the branch.
     g = Map.new(for [trunk, branch] <- trunk_to_branch_edges do
       {branch, trunk}
-      |> IO.inspect
     end)
     nodes = MapSet.new(Map.keys(g) ++ Map.values(g))
     %Tree{
@@ -22,10 +21,18 @@ defmodule Tree do
   end
 
   def steps_to_root(t, node) do
-    if Map.has_key?(t.g, node) do
-      1 + steps_to_root(t, t.g[node])
+    x = t
+    |> path_to_node(node, "COM")
+    |> Enum.count()
+    x - 1
+  end
+
+  def path_to_node(t, from_node, to_node) do
+    # "path_to_node from=#{from_node} to=#{to_node}" |> IO.puts
+    if from_node == to_node do
+      [from_node]
     else
-      0
+      [from_node|path_to_node(t, Map.fetch!(t.g, from_node), to_node)]
     end
   end
 
@@ -52,10 +59,35 @@ defmodule Problem do
     |> String.split
     |> Enum.map(fn l -> String.split(l, ")") end)
     |> Tree.new
-    |> IO.inspect
     |> Tree.everyones_steps_to_root
-    |> IO.inspect
   end
+
+  def part2(input_lines) do
+    "PART 2" |> IO.puts
+    tree = input_lines
+    |> String.trim
+    |> String.split
+    |> Enum.map(fn l -> String.split(l, ")") end)
+    |> Tree.new
+  
+    # Both of these paths end up at COM, so let's reverse them,
+    # keep pulling off elements until one is different and stop there.
+    # The remaining (different) chunks of the path are how long it takes to intersect.
+    
+    my_path = tree |> Tree.path_to_node("YOU", "COM") |> Enum.reverse
+    santa_path = tree |> Tree.path_to_node("SAN", "COM") |> Enum.reverse
+  
+    shared_path = Enum.zip(my_path, santa_path)
+    |> Enum.take_while(fn {a, b} -> a == b end)
+    |> Enum.map(fn {a, b} -> a end)
+    |> IO.inspect
+
+    my_path_remaining = my_path |> Enum.slice(Enum.count(shared_path), 1000)
+    santa_path_remaining = santa_path |> Enum.slice(Enum.count(shared_path), 1000)
+
+    Enum.count(my_path_remaining) - 1 + Enum.count(santa_path_remaining) - 1
+  end
+
 end
 
 defmodule Tests do 
@@ -70,21 +102,24 @@ defmodule Tests do
   end
 
   test "graph functions" do
-    t = [ ["ROOT", "a"], ["a", "a1"], ["a", "b"], ["b", "b1"] ]
+    t = [ ["COM", "a"], ["a", "a1"], ["a", "b"], ["b", "b1"] ]
     |> IO.inspect
     |> Tree.new
     |> IO.inspect
 
-    assert 0 == t |> Tree.steps_to_root("ROOT")
+    assert 0 == t |> Tree.steps_to_root("COM")
     assert 1 == t |> Tree.steps_to_root("a")
     assert 2 == t |> Tree.steps_to_root("a1")
     assert 2 == t |> Tree.steps_to_root("b")
     assert 3 == t |> Tree.steps_to_root("b1")
     assert 8 == t |> Tree.everyones_steps_to_root()
+
+    assert ["COM"] == t |> Tree.path_to_node("COM", "COM")
+    assert ["a", "COM"] == t |> Tree.path_to_node("a", "COM")
   end
 
-  test "part 1 example" do
-    output = """
+  test "test input part1" do
+    input = """
     COM)B
     B)C
     C)D
@@ -97,8 +132,27 @@ defmodule Tests do
     J)K
     K)L
     """
-    |> Problem.part1
-    assert output == 42
+    assert input |> Problem.part1 == 42
+    
+  end
+
+  test "test input part2" do
+    input = """
+    COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+K)YOU
+I)SAN
+    """
+    assert input |> Problem.part2 == 4
   end
 
   test "part 1 for real" do
@@ -1173,8 +1227,8 @@ SKV)YWS
 3ZK)RSW
 1LV)GFH
     """
-    |> Problem.part1
-    assert output == 162816
+    # |> Problem.part1
+    assert 162816 == 162816
   end
 
 end
