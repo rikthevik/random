@@ -72,7 +72,17 @@ defmodule Machine do
       output: [val|m.output]
     }
   end
-
+  def instruction(m, 6, modes) do   # jump_if_false(comparison, new_pc)
+    val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    new_pc = m |> Machine.read(m.prog[m.pc+2], modes[1])
+    if val == 0 do
+      %{m|
+        pc: new_pc}
+    else
+      %{m|
+        pc: m.pc+3}
+    end
+  end
   def instruction(m, 7, modes) do   # test_lt(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> if l < r, do: 1, else: 0 end)
   end
@@ -192,30 +202,40 @@ defmodule Tests do
   end
 
   test "test equal 8" do 
-    prog_positional = "3,9,8,9,10,9,4,9,99,-1,8"
-    assert [0] == prog_positional |> prepare_prog_string |> Machine.new([7])
-    assert [1] == prog_positional |> prepare_prog_string |> Machine.new([8])
-    assert [0] == prog_positional |> prepare_prog_string |> Machine.new([9])
+    prog = "3,9,8,9,10,9,4,9,99,-1,8"
+    assert [0] == prog |> prepare_prog_string |> Machine.new([7])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([8])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([9])
     
-    prog_immediate = "3,3,1108,-1,8,3,4,3,99"
-    assert [0] == prog_immediate |> prepare_prog_string |> Machine.new([7])
-    assert [1] == prog_immediate |> prepare_prog_string |> Machine.new([8])
-    assert [0] == prog_immediate |> prepare_prog_string |> Machine.new([9])
+    prog = "3,3,1108,-1,8,3,4,3,99"
+    assert [0] == prog |> prepare_prog_string |> Machine.new([7])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([8])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([9])
   end
 
   test "tess lt 8" do
-    prog_positional = "3,9,7,9,10,9,4,9,99,-1,8"
-    assert [1] == prog_positional |> prepare_prog_string |> Machine.new([7])
-    assert [0] == prog_positional |> prepare_prog_string |> Machine.new([8])
-    assert [0] == prog_positional |> prepare_prog_string |> Machine.new([9])
+    prog = "3,9,7,9,10,9,4,9,99,-1,8"
+    assert [1] == prog |> prepare_prog_string |> Machine.new([7])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([8])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([9])
     
-    prog_immediate = "3,3,1107,-1,8,3,4,3,99"
-    assert [1] == prog_immediate |> prepare_prog_string |> Machine.new([7])
-    assert [0] == prog_immediate |> prepare_prog_string |> Machine.new([8])
-    assert [0] == prog_immediate |> prepare_prog_string |> Machine.new([9])
+    prog = "3,3,1107,-1,8,3,4,3,99"
+    assert [1] == prog |> prepare_prog_string |> Machine.new([7])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([8])
+    assert [0] == prog |> prepare_prog_string |> Machine.new([9])
   end
 
-  
+  test "jump tests" do
+    prog = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9"
+    assert [0] == prog |> prepare_prog_string |> Machine.new([0])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([1])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([12345])
+
+    prog = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1"
+    assert [0] == prog |> prepare_prog_string |> Machine.new([0])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([1])
+    assert [1] == prog |> prepare_prog_string |> Machine.new([12345])
+  end
 
   test "problem 3 still works" do    
     # "1,12,2,3,1,1,2,3,1,3,4,3,1,5,0,3,2,10,1,19,1,19,9,23,1,23,6,27,2,27,13,31,1,10,31,35,1,10,35,39,2,39,6,43,1,43,5,47,2,10,47,51,1,5,51,55,1,55,13,59,1,59,9,63,2,9,63,67,1,6,67,71,1,71,13,75,1,75,10,79,1,5,79,83,1,10,83,87,1,5,87,91,1,91,9,95,2,13,95,99,1,5,99,103,2,103,9,107,1,5,107,111,2,111,9,115,1,115,6,119,2,13,119,123,1,123,5,127,1,127,9,131,1,131,10,135,1,13,135,139,2,9,139,143,1,5,143,147,1,13,147,151,1,151,2,155,1,10,155,0,99,2,14,0,0"
