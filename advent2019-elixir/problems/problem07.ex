@@ -1,6 +1,4 @@
 
-# I feel like reading the spec was the hard part here.
-
 defmodule Util do
   # :math.pow() is all about floats and i don't want to convert back
   # and this looks like CMPT 340 homework  :)
@@ -27,18 +25,21 @@ end
 defmodule Machine do
   defstruct [:pc, :prog, :input, :output]
 
-  def new(prog_list, input) do
+  def new(prog_list) do
     # Take the list of program memory and put it in a map.  
     # Afaict we don't really get direct-access arrays.
     # Zip together a list of addresses (0..whatever) with the program contents.
-    m = %Machine{
+    %Machine{
       pc: 0,
       prog: Map.new(Enum.zip(0..Enum.count(prog_list), prog_list)),
-      input: input,
-      output: [],
-    }
-    m = m |> Machine.decode_next()
-    m.output |> Enum.reverse
+      input: [],
+      output: []}
+  end
+
+  def run(m, new_input) do
+    %{m| 
+      input: m.input ++ new_input}
+    |> Machine.decode_next()
   end
 
   def read(m, val, :read_immediate) do
@@ -78,6 +79,7 @@ defmodule Machine do
     m |> two_operand_alu(modes, fn (l, r) -> l * r end)
   end
   def instruction(m, 3, modes) do   # read_input(target_addr)
+    # read the most recent input
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
     %{m|
@@ -125,12 +127,13 @@ defmodule Machine do
     inst = m.prog[m.pc]
     {opcode, modes} = find_opcode_and_modes(inst)
     # "PC=#{m.pc} OPCODE #{opcode} #{inspect modes}" |> IO.puts
-    if opcode == 99 do
-      m
-    else
-      m 
-      |> instruction(opcode, modes) 
-      |> decode_next()
+    case opcode do
+      99 ->
+        { m, :stopped }
+      _ ->
+        m 
+        |> instruction(opcode, modes) 
+        |> decode_next()
     end
   end
 end
@@ -142,28 +145,29 @@ defmodule Problem do
     |> Enum.map(&String.to_integer/1)
   end
 
-  def run_stage(input, _prog_list, []) do input end
-  def run_stage(input, prog_list, [phase|phases]) do
+  def run_stage(input_val, _prog_list, []) do input_val end
+  def run_stage(input_val, prog_list, [phase|phases]) do
     # Supply the phase and the input to the program as per the spec.
     # Run the program and get the output.
     # Send the output as the input to the next stage.
     # .. is that it? ..
-    output = prog_list 
-    |> Machine.new([phase, input])
-    |> Enum.at(0)
-    run_stage(output, prog_list, phases)
+    { m, :stopped } = prog_list
+    |> Machine.new()
+    |> Machine.run([phase, input_val])
+    run_stage(m.output |> Enum.at(0), prog_list, phases)
   end
 
   def part1(prog_list) do
     for phases <- Util.permutations(Enum.to_list(0..4)) do
-      attempt(prog_list, phases)
+      a = attempt(prog_list, phases)
+      |> IO.inspect
+      { m, :stopped } = a 
+      m.output |> Enum.at(0)
     end |> Enum.max()
   end
 
   def attempt(prog_list, phases) do
-    output = run_stage(0, prog_list, phases)
-    "attempt: #{inspect phases} => #{output}" |> IO.puts
-    output
+    run_stage(0, prog_list, phases)
   end
 end
 
@@ -178,31 +182,36 @@ defmodule Tests do
     |> Enum.at(0)
   end
 
-  test "example program 1" do
-    prog_string = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
-    prog_list = prog_string |> prepare_prog_string
-    assert Problem.attempt(prog_list, [4,3,2,1,0]) == 43210
-    assert Problem.part1(prog_list) == 43210
-  end
+  # test "example program 1" do
+  #   prog_string = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
+  #   prog_list = prog_string |> prepare_prog_string
+  # end
 
-  test "example program 2" do
-    prog_string = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0"
-    prog_list = prog_string |> prepare_prog_string
-    assert Problem.attempt(prog_list, [0,1,2,3,4]) == 54321
-    assert Problem.part1(prog_list) == 54321
-  end
+  # test "example program 2" do
+  #   prog_string = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0"
+  #   prog_list = prog_string |> prepare_prog_string
+  #   assert Problem.part1(prog_list) == 54321
+  # end
 
-  test "example program 3" do
-    prog_string = "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0"
-    prog_list = prog_string |> prepare_prog_string
-    assert Problem.attempt(prog_list, [1,0,4,3,2]) == 65210
-    assert Problem.part1(prog_list) == 65210
-  end
+  # test "example program 3" do
+  #   prog_string = "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0"
+  #   prog_list = prog_string |> prepare_prog_string
+  #   assert Problem.part1(prog_list) == 65210
+  # end
 
-  test "part 1 go time" do
-    prog_string = "3,8,1001,8,10,8,105,1,0,0,21,34,47,72,81,102,183,264,345,426,99999,3,9,102,5,9,9,1001,9,3,9,4,9,99,3,9,101,4,9,9,1002,9,3,9,4,9,99,3,9,102,3,9,9,101,2,9,9,102,5,9,9,1001,9,3,9,1002,9,4,9,4,9,99,3,9,101,5,9,9,4,9,99,3,9,101,3,9,9,1002,9,5,9,101,4,9,9,102,2,9,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,99"
-    prog_list = prog_string |> prepare_prog_string
-    assert Problem.part1(prog_list) == 92663
+  # test "part 1 go time" do
+  #   prog_string = "3,8,1001,8,10,8,105,1,0,0,21,34,47,72,81,102,183,264,345,426,99999,3,9,102,5,9,9,1001,9,3,9,4,9,99,3,9,101,4,9,9,1002,9,3,9,4,9,99,3,9,102,3,9,9,101,2,9,9,102,5,9,9,1001,9,3,9,1002,9,4,9,4,9,99,3,9,101,5,9,9,4,9,99,3,9,101,3,9,9,1002,9,5,9,101,4,9,9,102,2,9,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,99"
+  #   prog_list = prog_string |> prepare_prog_string
+  #   assert Problem.part1(prog_list) == 92663
+  # end
+
+  test "output pauses" do
+    { m, :stopped } = "3,0,4,0,99"
+    |> prepare_prog_string
+    |> Machine.new()
+    |> Machine.run([123])
+    |> IO.inspect
+    assert m.output == [123]
   end
 end
 
