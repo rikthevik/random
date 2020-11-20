@@ -42,6 +42,14 @@ defmodule Machine do
       input: m.input ++ new_input}
     |> Machine.decode_next()
   end
+  def run_until_stop(m, new_input) do
+    # I don't love this function but it gets the job done.
+    run_result = m |> Machine.run(new_input)
+    case run_result do
+      {m, :stopped} -> run_result
+      {m, :output} -> run_until_stop(m, [])
+    end
+  end
 
   def read(m, val, :read_immediate) do
     val
@@ -132,6 +140,8 @@ defmodule Machine do
     case opcode do
       99 ->
         { m, :stopped }
+      4 ->
+        { m |> instruction(opcode, modes), :output }
       _ ->
         m 
         |> instruction(opcode, modes) 
@@ -154,19 +164,16 @@ defmodule Problem do
     # .. is that it? ..
     { m, :stopped } = prog_list
     |> Machine.new("phase #{phase}")
-    |> Machine.run([phase, input_val])
+    |> Machine.run_until_stop([phase, input_val])
     run_stage(m.output |> Enum.at(0), prog_list, phases)
   end
 
   def part1(prog_list) do
     for phases <- Util.permutations(Enum.to_list(0..4)) do
-      attempt(prog_list, phases)
+      run_stage(0, prog_list, phases)
     end |> Enum.max()
   end
 
-  def attempt(prog_list, phases) do
-    run_stage(0, prog_list, phases)
-  end
 end
 
 defmodule Tests do 
@@ -214,7 +221,7 @@ defmodule Tests do
     { m, :stopped } = "3,0,4,0,99"
     |> prepare_prog_string
     |> Machine.new("machine1")
-    |> Machine.run([123])
+    |> Machine.run_until_stop([123])
     |> IO.inspect
     assert m.output == [123]
   end
