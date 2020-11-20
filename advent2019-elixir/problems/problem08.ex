@@ -21,8 +21,11 @@ defmodule Problem do
 
   def part1(s, {w, h}) do
     img = s |> Problem.parse |> Image.new({w, h})
-    zero_counts = img.layers |> Enum.count(&(&1 == 0)) 
+    min_zero_layer = img.layers
+    |> Enum.sort_by(fn layer -> Enum.count(layer, &(&1 == 0)) end)
+    |> Enum.at(0)
     |> IO.inspect
+    Enum.count(min_zero_layer, &(&1 == 1)) * Enum.count(min_zero_layer, &(&1 == 2))
   end
 end
 
@@ -40,7 +43,7 @@ defmodule Tests do
   
   test "part 1 test" do
     s = "123456789012"
-    assert 2 == Problem.part1(s, {3, 2})
+    assert 1 == Problem.part1(s, {3, 2})
   end
 
 end
