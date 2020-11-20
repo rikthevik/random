@@ -23,13 +23,14 @@ defmodule Util do
 end
 
 defmodule Machine do
-  defstruct [:pc, :prog, :input, :output]
+  defstruct [:id, :pc, :prog, :input, :output]
 
-  def new(prog_list) do
+  def new(prog_list, id) do
     # Take the list of program memory and put it in a map.  
     # Afaict we don't really get direct-access arrays.
     # Zip together a list of addresses (0..whatever) with the program contents.
     %Machine{
+      id: id,
       pc: 0,
       prog: Map.new(Enum.zip(0..Enum.count(prog_list), prog_list)),
       input: [],
@@ -82,6 +83,7 @@ defmodule Machine do
     # read the most recent input
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
+    "#{m.id} read_input() => #{input_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
       prog: m.prog |> Map.put(target_addr, input_val),
@@ -89,10 +91,11 @@ defmodule Machine do
     }
   end
   def instruction(m, 4, modes) do   # write_output(arg)
-    val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    output_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    "#{m.id} write_output(#{output_val})" |> IO.puts
     %{m|
       pc: m.pc + 2,
-      output: [val|m.output]
+      output: [output_val|m.output]
     }
   end
   def instruction(m, 5, modes) do   # jump_if_true(comparison, new_pc)
@@ -152,17 +155,14 @@ defmodule Problem do
     # Send the output as the input to the next stage.
     # .. is that it? ..
     { m, :stopped } = prog_list
-    |> Machine.new()
+    |> Machine.new("phase #{phase}")
     |> Machine.run([phase, input_val])
     run_stage(m.output |> Enum.at(0), prog_list, phases)
   end
 
   def part1(prog_list) do
     for phases <- Util.permutations(Enum.to_list(0..4)) do
-      a = attempt(prog_list, phases)
-      |> IO.inspect
-      { m, :stopped } = a 
-      m.output |> Enum.at(0)
+      attempt(prog_list, phases)
     end |> Enum.max()
   end
 
@@ -182,10 +182,17 @@ defmodule Tests do
     |> Enum.at(0)
   end
 
-  # test "example program 1" do
-  #   prog_string = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
-  #   prog_list = prog_string |> prepare_prog_string
-  # end
+  test "cycle through items forever" do
+    assert [1, 2, 3, 1, 2, 3, 1] == [1, 2, 3]
+    |> Stream.cycle
+    |> Enum.take(7)
+  end
+
+  test "example program 1" do
+    prog_string = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
+    prog_list = prog_string |> prepare_prog_string
+    Problem.part1(prog_list)
+  end
 
   # test "example program 2" do
   #   prog_string = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0"
@@ -208,7 +215,7 @@ defmodule Tests do
   test "output pauses" do
     { m, :stopped } = "3,0,4,0,99"
     |> prepare_prog_string
-    |> Machine.new()
+    |> Machine.new("machine1")
     |> Machine.run([123])
     |> IO.inspect
     assert m.output == [123]
