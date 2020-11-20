@@ -72,7 +72,6 @@ defmodule Machine do
     end
   end
 
-
   def instruction(m, 1, modes) do   # add(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> l + r end)
   end
@@ -142,7 +141,6 @@ defmodule Machine do
 end
 
 defmodule Problem do
-
   def parse(line) do
     String.split(line, ",") 
     |> Enum.map(&String.to_integer/1)
