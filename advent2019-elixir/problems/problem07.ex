@@ -25,7 +25,7 @@ end
 defmodule Machine do
   defstruct [:id, :pc, :prog, :input, :output]
 
-  def new(prog_list, id) do
+  def new(prog_list, id, input \\ []) do
     # Take the list of program memory and put it in a map.  
     # Afaict we don't really get direct-access arrays.
     # Zip together a list of addresses (0..whatever) with the program contents.
@@ -33,7 +33,7 @@ defmodule Machine do
       id: id,
       pc: 0,
       prog: Map.new(Enum.zip(0..Enum.count(prog_list), prog_list)),
-      input: [],
+      input: input,
       output: []}
   end
 
@@ -174,6 +174,27 @@ defmodule Problem do
     end |> Enum.max()
   end
 
+  def part2_attempt(prog_list, phases) do
+    phase_string = phases |> Enum.join("")
+    machines = for p <- phases do
+      Machine.new(prog_list, "#{phase_string}-#{p}", [p])
+    end
+    run_stage2(0, machines)
+  end
+
+  def run_stage2(input_val, []) do input_val end
+  def run_stage2(input_val, [m|mlist]) do
+    run_result = m |> Machine.run([input_val])
+    case run_result do
+      {m, :output} -> 
+        output_val = m.output |> Enum.at(0)
+        run_stage2(output_val, mlist ++ [m])
+      {m, :stopped} ->
+        output_val = m.output |> Enum.at(0)
+        run_stage2(output_val, mlist)
+    end
+  end
+
 end
 
 defmodule Tests do 
@@ -215,6 +236,18 @@ defmodule Tests do
     prog_string = "3,8,1001,8,10,8,105,1,0,0,21,34,47,72,81,102,183,264,345,426,99999,3,9,102,5,9,9,1001,9,3,9,4,9,99,3,9,101,4,9,9,1002,9,3,9,4,9,99,3,9,102,3,9,9,101,2,9,9,102,5,9,9,1001,9,3,9,1002,9,4,9,4,9,99,3,9,101,5,9,9,4,9,99,3,9,101,3,9,9,1002,9,5,9,101,4,9,9,102,2,9,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,99,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,99"
     prog_list = prog_string |> prepare_prog_string
     assert Problem.part1(prog_list) == 92663
+  end
+
+  test "part 2 example 1" do
+    prog_list = "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5"
+    |> prepare_prog_string
+    assert Problem.part2_attempt(prog_list, [9,8,7,6,5]) == 139629729
+  end
+
+  test "part 2 example 2" do
+    prog_list = "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10"
+    |> prepare_prog_string
+    assert Problem.part2_attempt(prog_list, [9,7,8,5,6]) == 18216
   end
 
   test "output pauses" do
