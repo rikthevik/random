@@ -72,6 +72,8 @@ defmodule Machine do
   end  
 
   defp inner_write(m, addr, val) when addr >= 0 do 
+    # !! Had a bug earlier where I wasn't using the addressing
+    #  mode in writes, because they wer all positional before. !!
     # Note that we can write to addresses that weren't 
     # originally in our program.  Free memory!
     %{m|
