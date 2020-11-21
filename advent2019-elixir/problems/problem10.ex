@@ -54,8 +54,15 @@ defmodule Asteroids do
     end
   end
 
-  def destroy(aset) do
-
+  def destroy(aset, {x, y}, {ax, ay}) do
+    # Nice property: The angle from the centre is the same.
+    # So we don't need to try to recalculate the visible asteroids, we can just
+    # return the next asteroid that was previously blocked.  This is important.
+    aset_remaining = aset |> MapSet.delete({ax, ay})
+    newly_visible = blocked_after({x, y}, {ax, ay})
+    |> Enum.filter(&(MapSet.member?(aset, &1)))
+    |> Enum.at(0)
+    { aset_remaining, newly_visible }
   end
 
 end
@@ -63,15 +70,15 @@ end
 defmodule Problem10 do
 
   def part1(map, {w, h}) do
-    alist = Asteroids.new(map, {w, h})
-    for a <- alist do
-      {a, Asteroids.visible_from(alist, a) |> Enum.count}
+    aset = Asteroids.new(map, {w, h})
+    for a <- aset do
+      {a, Asteroids.visible_from(aset, a) |> Enum.count}
     end
     |> Enum.sort_by(fn {a, detected} -> -detected end)
     |> Enum.at(0)
   end
   
-  def part2(s) do
+  def part2(aset, best_location) do
 
   end
 end
@@ -223,7 +230,19 @@ defmodule Tests do
     assert number_detected == 319
   end
 
-
+  @tag :part2
+  test "part 2 example" do
+    map = """
+    .#....#####...#..
+    ##...##.#####..##
+    ##...#...#.#####.
+    ..#.....#...###..
+    ..#.#.....#....##
+    """
+    { best_location, number_detected } = Problem10.part1(map, {17, 5})
+    assert best_location == {8, 3}
+    assert number_detected == 30
+  end
   
 
 end
