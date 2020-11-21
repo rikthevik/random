@@ -35,8 +35,6 @@ defmodule Asteroids do
     remaining_asteroids = aset 
     |> MapSet.delete({x, y})              # Remove the current asteroid!
     |> MapSet.difference(blocked_paths)   # Remove all of the blocked ones.
-    # |> IO.inspect
-    |> Enum.count
   end
   
   
@@ -56,6 +54,10 @@ defmodule Asteroids do
     end
   end
 
+  def destroy(aset) do
+
+  end
+
 end
 
 defmodule Problem10 do
@@ -63,7 +65,7 @@ defmodule Problem10 do
   def part1(map, {w, h}) do
     alist = Asteroids.new(map, {w, h})
     for a <- alist do
-      {a, Asteroids.visible_from(alist, a)}
+      {a, Asteroids.visible_from(alist, a) |> Enum.count}
     end
     |> Enum.sort_by(fn {a, detected} -> -detected end)
     |> Enum.at(0)
@@ -104,16 +106,16 @@ defmodule Tests do
     ...##
     """
     a = Asteroids.new(map, {5, 5})
-    assert 7 == a |> Asteroids.visible_from({1, 0})
-    assert 7 == a |> Asteroids.visible_from({4, 0})
-    assert 6 == a |> Asteroids.visible_from({0, 2})
-    assert 7 == a |> Asteroids.visible_from({1, 2})
-    assert 7 == a |> Asteroids.visible_from({2, 2})
-    assert 7 == a |> Asteroids.visible_from({3, 2})
-    assert 5 == a |> Asteroids.visible_from({4, 2})
-    assert 7 == a |> Asteroids.visible_from({4, 3})
-    assert 8 == a |> Asteroids.visible_from({3, 4})
-    assert 7 == a |> Asteroids.visible_from({4, 4})
+    assert 7 == a |> Asteroids.visible_from({1, 0}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({4, 0}) |> Enum.count
+    assert 6 == a |> Asteroids.visible_from({0, 2}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({1, 2}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({2, 2}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({3, 2}) |> Enum.count
+    assert 5 == a |> Asteroids.visible_from({4, 2}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({4, 3}) |> Enum.count
+    assert 8 == a |> Asteroids.visible_from({3, 4}) |> Enum.count
+    assert 7 == a |> Asteroids.visible_from({4, 4}) |> Enum.count
     { best_location, number_detected } = Problem10.part1(map, {5, 5})
     assert best_location == {3, 4}
     assert number_detected == 8
