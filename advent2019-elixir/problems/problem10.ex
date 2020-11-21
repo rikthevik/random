@@ -60,7 +60,7 @@ defmodule Asteroids do
     aset_remaining = aset |> MapSet.delete({ax, ay})
     newly_visible = blocked_after({x, y}, {ax, ay})
     |> Enum.filter(&(MapSet.member?(aset, &1)))
-    |> Enum.at(0)
+    |> Enum.take(1)
     { aset_remaining, newly_visible }
   end 
 
@@ -98,10 +98,15 @@ defmodule Problem10 do
     |> Enum.map(fn {x,y} -> { Asteroids.by_laser_sort({x, y}), {x, y} } end)
     |> Enum.sort  # could use sort_by but i wanted to see this
     |> Enum.map(fn {order, asteroid} -> asteroid end)
-    |> IO.inspect
-    
+
+    destroy_next(aset, visible)
   end
 
+  def destroy_next(aset, []) do [] end
+  def destroy_next(aset, [a|alist]) do
+    { aset, newly_visible } = aset |> Asteroids.destroy({0, 0}, a)
+    [a] ++ destroy_next(aset, alist ++ newly_visible)
+  end
   
 end
 
@@ -283,7 +288,12 @@ defmodule Tests do
     # assert aset |> Asteroids.visible_from({0, 0}) |> Enum.member?({1, 2})
 
     destroyed = Problem10.part2(map, {17, 5})
-    assert [{0, -2}, {1, -3}, {1, -2}, {2, -3}, {1, -1}, {3, -2}, {4, -2}, {3, -1}, {7, -2}] == destroyed |> Enum.take(9)
+    assert [
+      {0, -2}, {1, -3}, {1, -2}, {2, -3}, {1, -1}, {3, -2}, {4, -2}, {3, -1}, {7, -2},
+      {4, -1}, {5, -1}, {6, -1}, {7, -1}, {4, 0}, {8, 1}, {7, 1}, {2, 1}, {-4, 1},
+      {-6, 1}, {-6, 0}, {-8, -1}, {-7, -1}, {-8, -2}, {-7, -2}, {-3, -1}, {-7, -3}, {-3, -2},
+      {-2, -2}, {-2, -3}, {-1, -3}, {0, -3}, {2, -2}, {6, -3}, {8, -2}, {5, 0}, {6, 0}
+    ] == destroyed
   end
   
 
