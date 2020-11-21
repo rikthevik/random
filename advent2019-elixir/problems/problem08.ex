@@ -6,7 +6,9 @@ end
 defmodule Image do
   defstruct [:w, :h, :layers, :pixels]
   def new(ints, {w, h}) do
+    # Let's break up the list of ints into a list of image-sized layers.
     layers = ints |> Enum.chunk_every(w*h)
+    # Go through the layers and make an image sized list of the stacked pixels.
     pixels = for i <- 0..(w*h-1) do
       layers |> Enum.map(fn layer -> Enum.at(layer, i) end)
     end
@@ -21,9 +23,9 @@ defmodule Image do
   def pixel(img, {x, y}) do
     # "pixel #{x} #{y} == #{img.w * x + y}" |> IO.puts
     img.pixels
-    |> Enum.at(img.w * y + x)
-    |> Enum.drop_while(fn c -> c == 2 end)
-    |> Enum.at(0)
+    |> Enum.at(img.w * y + x)               # Grab the stack of pixels.
+    |> Enum.drop_while(fn c -> c == 2 end)  # Drop the transparent pixels.
+    |> Enum.at(0)                           # Whatever's on top, that's what's visible.
   end
 end
 
@@ -85,6 +87,5 @@ defmodule Tests do
     assert 2440 = Problem.part1(s, {25, 6})
     Problem.part2(s, {25, 6})
   end
-
 end
 
