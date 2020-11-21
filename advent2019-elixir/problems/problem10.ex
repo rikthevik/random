@@ -1,13 +1,12 @@
 
 defmodule Util do
-  def slope({ax, ay}, {bx, by}) do
-    # Return the smallest integer slope: {rise, run}
+  def slope_vec({ax, ay}, {bx, by}) do
+    # Return the smallest integer slope_vec: {rise, run}
     {rise, run} = {by - ay, bx - ax}
     divisor = Integer.gcd(rise, run)
     {Integer.floor_div(rise, divisor), Integer.floor_div(run, divisor)}
   end
 
-  
 end
 
 defmodule Asteroids do
@@ -47,7 +46,7 @@ defmodule Asteroids do
   def blocked_after({x, y}, {ax, ay}) do
     # What are all of the paths blocked by the second asteroid?
     #  Does not include the second asteroid!
-    {rise, run} = Util.slope({x, y}, {ax, ay})
+    {rise, run} = Util.slope_vec({x, y}, {ax, ay})
     # "blocked_after rise=#{rise} run=#{run}" |> IO.puts
     for i <- 1..50 do   # keep going for quite awhile, doesn't matter if it's past bounds
       {ax+run*i, ay+rise*i}
@@ -63,7 +62,14 @@ defmodule Asteroids do
     |> Enum.filter(&(MapSet.member?(aset, &1)))
     |> Enum.at(0)
     { aset_remaining, newly_visible }
+  end 
+
+  def by_laser_sort({x, y}) do
+    # Remember that the coordinate system grows down, so invert the y value.
+    angle = -:math.atan2(-y, x) + :math.pi/2
+    if angle < 0, do: angle + :math.pi*2, else: angle
   end
+
 
 end
 
@@ -78,30 +84,55 @@ defmodule Problem10 do
     |> Enum.at(0)
   end
   
-  def part2(aset, best_location) do
-
+  def part2(map, {w, h}) do
+    { {lx, ly}, _num_detected } = part1(map, {w, h})
+    
+    # Let's subtract the laser_location to make the math easier.
+    aset = Asteroids.new(map, {w, h})
+    |> Enum.map(fn {x, y} -> {x - lx, y - ly} end)
+    |> MapSet.new
+    
+    visible = aset 
+    |> IO.inspect
+    |> Asteroids.visible_from({0, 0})
+    |> Enum.map(fn {x,y} -> { Asteroids.by_laser_sort({x, y}), {x, y} } end)
+    |> Enum.sort  # could use sort_by but i wanted to see this
+    |> Enum.map(fn {order, asteroid} -> asteroid end)
+    |> IO.inspect
+    
   end
+
+  
 end
 
 defmodule Tests do 
   use ExUnit.Case
 
-  test "slope functions" do
-    assert {1, 1} == Util.slope({0, 0}, {1, 1})
-    assert {1, -1} == Util.slope({0, 0}, {-2, 2})
+  test "slope_vec functions" do
+    assert {1, 1} == Util.slope_vec({0, 0}, {1, 1})
+    assert {1, -1} == Util.slope_vec({0, 0}, {-2, 2})
   end
 
   test "blocked functions" do
     assert [{2, 2}, {3, 3}] = Asteroids.blocked_after({0, 0}, {1, 1}) |> Enum.take(2)
   end
 
+  @tag :fast
   test "loading" do
     map = """
+    #..
     .#.
-    ..#
+    #.#
     """
     # Kinda janky to compare against a MapSet...
-    assert [{1, 0}, {2, 1}] == Asteroids.new(map, {3, 2}) |> MapSet.to_list |> Enum.sort
+    aset = Asteroids.new(map, {3, 3})
+    assert [{0, 0}, {0, 2}, {1, 1}, {2, 2}] == aset |> MapSet.to_list |> Enum.sort
+
+    # Let's try the destroy functions
+    assert [{0, 2}, {1, 1}] == aset |> Asteroids.visible_from({0, 0}) |> MapSet.to_list |> Enum.sort
+    { aset, newly_visible } = aset |> Asteroids.destroy({0, 0}, {1, 1})
+    assert newly_visible == {2, 2}
+    assert [{0, 2}, {2, 2}] == aset |> Asteroids.visible_from({0, 0}) |> MapSet.to_list |> Enum.sort
   end
 
   test "example 1" do
@@ -239,9 +270,20 @@ defmodule Tests do
     ..#.....#...###..
     ..#.#.....#....##
     """
-    { best_location, number_detected } = Problem10.part1(map, {17, 5})
-    assert best_location == {8, 3}
+    { {lx, ly}, number_detected } = Problem10.part1(map, {17, 5})
+    assert {lx, ly} == {8, 3}
     assert number_detected == 30
+
+    aset = Asteroids.new(map, {17, 5})
+    |> Enum.map(fn {x, y} -> {x - lx, y - ly} end)
+    |> Enum.sort
+    |> IO.inspect
+    |> MapSet.new
+    
+    # assert aset |> Asteroids.visible_from({0, 0}) |> Enum.member?({1, 2})
+
+    destroyed = Problem10.part2(map, {17, 5})
+    assert [{0, -2}, {1, -3}, {1, -2}, {2, -3}, {1, -1}, {3, -2}, {4, -2}, {3, -1}, {7, -2}] == destroyed |> Enum.take(9)
   end
   
 
