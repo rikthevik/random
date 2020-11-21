@@ -23,7 +23,7 @@ defmodule Util do
 end
 
 defmodule Machine do
-  defstruct [:id, :pc, :prog, :input, :output]
+  defstruct [:id, :pc, :relbase, :prog, :input, :output]
 
   def new(prog_list, id, input \\ []) do
     # Take the list of program memory and put it in a map.  
@@ -32,6 +32,7 @@ defmodule Machine do
     %Machine{
       id: id,
       pc: 0,
+      relbase: 0,
       prog: Map.new(Enum.zip(0..Enum.count(prog_list), prog_list)),
       input: input,
       output: []}
@@ -51,11 +52,24 @@ defmodule Machine do
     end
   end
 
+  defp inner_read(m, addr) when addr >= 0 do
+    # If this isn't value included in our program, read a 0.
+    m.prog |> Map.get(addr, 0)
+  end
   def read(m, val, :read_immediate) do
     val
   end
-  def read(m, val, :read_positional) do
-    m.prog[val]
+  def read(m, addr, :read_positional) do
+    inner_read(m, addr)
+  end
+  def read(m, offset, :read_relative) do
+    inner_read(m, m.relbase+offset)
+  end  
+
+  def write(m, addr, val) when addr >= 0 do    
+    %{m|
+      prog: m.prog |> Map.put(addr, val)
+    }
   end
 
   def two_operand_alu(m, modes, operation_func) do
@@ -65,8 +79,7 @@ defmodule Machine do
     result = operation_func.(left_val, right_val)
     %{m|
       pc: m.pc + 4,
-      prog: m.prog |> Map.put(target_addr, result)
-    }
+    } |> Machine.write(target_addr, result)
   end
   def jump_if_condition(m, modes, condition_func) do
     compare_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
@@ -87,15 +100,14 @@ defmodule Machine do
     m |> two_operand_alu(modes, fn (l, r) -> l * r end)
   end
   def instruction(m, 3, modes) do   # read_input(target_addr)
-    # read the most recent input
+    # read the most recent input and store in target addr
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
     # "#{m.id} read_input() => #{input_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
-      prog: m.prog |> Map.put(target_addr, input_val),
       input: remaining_input
-    }
+    } |> Machine.write(target_addr, input_val)
   end
   def instruction(m, 4, modes) do   # write_output(arg)
     output_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
@@ -117,11 +129,19 @@ defmodule Machine do
   def instruction(m, 8, modes) do   # test_eq(left, right, target_addr)
     m |> two_operand_alu(modes, fn (l, r) -> if l == r, do: 1, else: 0 end)
   end
+  def instruction(m, 9, modes) do   # adjust_relbase(offset)
+    offset_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    %{m|
+      pc: m.pc + 2,
+      relbase: m.relbase + offset_val,
+    }
+  end
 
   def mode_for_param(s) do
     case s do
       0 -> :read_positional
       1 -> :read_immediate
+      2 -> :read_relative
     end
   end
 
