@@ -253,9 +253,23 @@ defmodule Tests do
     assert m.output == [123]
   end
 
-  test "problem 09 examples" do
-    prog_list = "104,1125899906842624,99"
-    |> prepare_prog_string
+  test "problem09 part1 quine example" do
+    # it outputs itself
+    prog_string = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99" 
+    prog_list = prog_string |> prepare_prog_string
+    m = Problem09.part1(prog_list)
+    m.output |> IO.inspect
+    assert Enum.reverse(m.output) |> Enum.join(",") == prog_string
+  end
+
+  test "problem09 part1 16digit number example" do
+    prog_list = "1102,34915192,34915192,7,4,7,99,0" |> prepare_prog_string
+    m = Problem09.part1(prog_list)
+    assert 16 == m.output |> Enum.at(0) |> Integer.to_string |> String.length
+  end
+
+  test "problem09 part1 i think this just outputs a value" do
+    prog_list = "104,1125899906842624,99" |> prepare_prog_string
     m = Problem09.part1(prog_list)
     assert 1125899906842624 == m.output |> Enum.at(0)
   end
