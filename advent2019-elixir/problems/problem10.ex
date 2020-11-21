@@ -51,7 +51,7 @@ defmodule Asteroids do
     #  Does not include the second asteroid!
     {rise, run} = Util.slope({x, y}, {ax, ay})
     # "blocked_after rise=#{rise} run=#{run}" |> IO.puts
-    for i <- 1..50 do
+    for i <- 1..50 do   # keep going for quite awhile, doesn't matter if it's past bounds
       {ax+run*i, ay+rise*i}
     end
   end
@@ -94,7 +94,7 @@ defmodule Tests do
     assert [{1, 0}, {2, 1}] == Asteroids.new(map, {3, 2})
   end
 
-  test "example 2" do
+  test "example 1" do
     map = """
     .#..#
     .....
@@ -118,5 +118,89 @@ defmodule Tests do
     assert number_detected == 8
   end
  
+  test "example 2" do
+    map = """
+    ......#.#.
+    #..#.#....
+    ..#######.
+    .#.#.###..
+    .#..#.....
+    ..#....#.#
+    #..#....#.
+    .##.#..###
+    ##...#..#.
+    .#....####
+    """
+    { best_location, number_detected } = Problem10.part1(map, {10, 10})
+    assert best_location == {5, 8}
+    assert number_detected == 33
+  end
+
+  test "example 3" do
+    map = """
+    #.#...#.#.
+    .###....#.
+    .#....#...
+    ##.#.#.#.#
+    ....#.#.#.
+    .##..###.#
+    ..#...##..
+    ..##....##
+    ......#...
+    .####.###.
+    """
+    { best_location, number_detected } = Problem10.part1(map, {10, 10})
+    assert best_location == {1, 2}
+    assert number_detected == 35
+  end
+  
+  test "example 4" do
+    map = """
+    .#..#..###
+    ####.###.#
+    ....###.#.
+    ..###.##.#
+    ##.##.#.#.
+    ....###..#
+    ..#.#..#.#
+    #..#.#.###
+    .##...##.#
+    .....#.#..
+    """
+    { best_location, number_detected } = Problem10.part1(map, {10, 10})
+    assert best_location == {6, 3}
+    assert number_detected == 41
+  end
+
+  test "example 5" do
+    map = """
+    .#..##.###...#######
+    ##.############..##.
+    .#.######.########.#
+    .###.#######.####.#.
+    #####.##.#.##.###.##
+    ..#####..#.#########
+    ####################
+    #.####....###.#.#.##
+    ##.#################
+    #####.##.###..####..
+    ..######..##.#######
+    ####.##.####...##..#
+    .#####..#.######.###
+    ##...#.##########...
+    #.##########.#######
+    .####.#.###.###.#.##
+    ....##.##.###..#####
+    .#.#.###########.###
+    #.#.#.#####.####.###
+    ###.##.####.##.#..##
+    """
+    { best_location, number_detected } = Problem10.part1(map, {20, 20})
+    assert best_location == {11, 13}
+    assert number_detected == 210
+  end
+
+
+  
 
 end
