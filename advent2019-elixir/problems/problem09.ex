@@ -110,7 +110,7 @@ defmodule Machine do
     # read the most recent input and store in target addr
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
-    # "#{m.id} read_input() => #{input_val}" |> IO.puts
+    "#{m.id} read_input() => #{input_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
       input: remaining_input
@@ -121,7 +121,7 @@ defmodule Machine do
     "#{m.id}:pc=#{m.pc} write_output(#{output_val})" |> IO.puts
     %{m|
       pc: m.pc + 2,
-      output: [output_val|m.output]
+      output: [output_val|m.output]  # we kinda store the output backwards...
     }
   end
   def instruction(m, 5, modes) do   # jump_if_true(comparison, new_pc)
@@ -138,6 +138,7 @@ defmodule Machine do
   end
   def instruction(m, 9, modes) do   # adjust_relbase(offset)
     offset_val = m |> Machine.read(m.prog[m.pc+1], modes[0])
+    "#{m.id}:pc=#{m.pc} adjust_relbase(#{offset_val}) => #{m.relbase+offset_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
       relbase: m.relbase + offset_val,
@@ -163,7 +164,7 @@ defmodule Machine do
   def decode_next(m) do
     inst = m.prog[m.pc]
     {opcode, modes} = find_opcode_and_modes(inst)
-    # "PC=#{m.pc} OPCODE #{opcode} #{inspect modes}" |> IO.puts
+    "PC=#{m.pc} OPCODE #{opcode} #{inspect modes}" |> IO.puts
     case opcode do
       99 ->
         { m, :stopped }
@@ -253,6 +254,14 @@ defmodule Tests do
     |> Machine.new("machine1")
     |> Machine.run_until_stop([123])
     assert m.output == [123]
+  end
+
+  test "relative base works" do
+    m = "109,123,99"
+    |> prepare_prog_string
+    |> Machine.new("machine1")
+    |> Machine.run_until_stop
+    assert m.relbase == 123
   end
 
   test "problem09 part1 quine example" do
