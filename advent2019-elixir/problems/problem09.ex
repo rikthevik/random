@@ -48,11 +48,11 @@ defmodule Machine do
       input: m.input ++ new_input}
     |> Machine.decode_next()
   end
-  def run_until_stop(m, new_input) do
+  def run_until_stop(m, new_input \\ []) do
     # I don't love this function but it gets the job done.
     run_result = m |> Machine.run(new_input)
     case run_result do
-      {m, :stopped} -> run_result
+      {m, :stopped} -> m
       {m, :output} -> run_until_stop(m, [])
     end
   end
@@ -178,9 +178,9 @@ end
 defmodule Problem09 do
   
   def part1(prog_list) do
-    m = prog_list 
+    prog_list 
     |> Machine.new("part1")
-    
+    |> Machine.run_until_stop
   end
 end
 
@@ -246,7 +246,7 @@ defmodule Tests do
   end
 
   test "output pauses" do
-    { m, :stopped } = "3,0,4,0,99"
+    m = "3,0,4,0,99"
     |> prepare_prog_string
     |> Machine.new("machine1")
     |> Machine.run_until_stop([123])
@@ -257,7 +257,7 @@ defmodule Tests do
     prog_list = "104,1125899906842624,99"
     |> prepare_prog_string
     m = Problem09.part1(prog_list)
-
+    assert 1125899906842624 == m.output |> Enum.at(0)
   end
 end
 
@@ -269,7 +269,7 @@ defmodule Problem07 do
     # Run the program and get the output.
     # Send the output as the input to the next stage.
     # .. is that it? ..
-    { m, :stopped } = prog_list
+    m = prog_list
     |> Machine.new("phase #{phase}")
     |> Machine.run_until_stop([phase, input_val])
     run_stage(m.output |> Enum.at(0), prog_list, phases)
