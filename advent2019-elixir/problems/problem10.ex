@@ -24,14 +24,14 @@ defmodule Asteroids do
       end
     end
     |> Enum.filter(fn a -> a end)  # Drop non-asteroid positions.
+    |> MapSet.new
   end
   
-  def visible_from(alist, {x, y}) do
+  def visible_from(aset, {x, y}) do
     # Let's go through all of the other asteroids and find the paths they block.
     # If we have a list of asteroids we know are definitely blocked,
     #  hopefully the remaining asteroids should be the ones we can see.
-    aset = MapSet.new(alist)
-    blocked_paths = MapSet.new(look_at({x, y}, alist))
+    blocked_paths = MapSet.new(look_at({x, y}, MapSet.to_list(aset)))
     remaining_asteroids = aset 
     |> MapSet.delete({x, y})              # Remove the current asteroid!
     |> MapSet.difference(blocked_paths)   # Remove all of the blocked ones.
@@ -55,6 +55,7 @@ defmodule Asteroids do
       {ax+run*i, ay+rise*i}
     end
   end
+
 end
 
 defmodule Problem10 do
@@ -91,7 +92,7 @@ defmodule Tests do
     ..#
     """
     # Kinda janky to compare against a MapSet...
-    assert [{1, 0}, {2, 1}] == Asteroids.new(map, {3, 2})
+    assert [{1, 0}, {2, 1}] == Asteroids.new(map, {3, 2}) |> MapSet.to_list |> Enum.sort
   end
 
   test "example 1" do
