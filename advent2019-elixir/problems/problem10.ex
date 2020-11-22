@@ -93,7 +93,6 @@ defmodule Problem10 do
     |> MapSet.new
     
     visible = aset 
-    |> IO.inspect
     |> Asteroids.visible_from({0, 0})
     |> Enum.map(fn {x,y} -> { Asteroids.by_laser_sort({x, y}), {x, y} } end)
     |> Enum.sort  # could use sort_by but i wanted to see this
@@ -104,6 +103,11 @@ defmodule Problem10 do
 
   def destroy_next(aset, []) do [] end
   def destroy_next(aset, [a|alist]) do
+    # Destroy the current asteroid.  The destroy_next function will 
+    # return a list (empty or one element) of the newly revealed asteroids.
+    # Put the revealed asteroids at the end of the list and keep going.
+    # Because these were sorted by angle and the new asteroid has the 
+    # same angle as the old one, the sorting keeps looking after itself.
     { aset, newly_visible } = aset |> Asteroids.destroy({0, 0}, a)
     [a] ++ destroy_next(aset, alist ++ newly_visible)
   end
@@ -279,14 +283,6 @@ defmodule Tests do
     assert {lx, ly} == {8, 3}
     assert number_detected == 30
 
-    aset = Asteroids.new(map, {17, 5})
-    |> Enum.map(fn {x, y} -> {x - lx, y - ly} end)
-    |> Enum.sort
-    |> IO.inspect
-    |> MapSet.new
-    
-    # assert aset |> Asteroids.visible_from({0, 0}) |> Enum.member?({1, 2})
-
     destroyed = Problem10.part2(map, {17, 5})
     assert [
       {0, -2}, {1, -3}, {1, -2}, {2, -3}, {1, -1}, {3, -2}, {4, -2}, {3, -1}, {7, -2},
@@ -295,6 +291,47 @@ defmodule Tests do
       {-2, -2}, {-2, -3}, {-1, -3}, {0, -3}, {2, -2}, {6, -3}, {8, -2}, {5, 0}, {6, 0}
     ] == destroyed
   end
+
+  @tag :part2
+  test "part 2 another example" do
+    map = """
+    .#..##.###...#######
+    ##.############..##.
+    .#.######.########.#
+    .###.#######.####.#.
+    #####.##.#.##.###.##
+    ..#####..#.#########
+    ####################
+    #.####....###.#.#.##
+    ##.#################
+    #####.##.###..####..
+    ..######..##.#######
+    ####.##.####...##..#
+    .#####..#.######.###
+    ##...#.##########...
+    #.##########.#######
+    .####.#.###.###.#.##
+    ....##.##.###..#####
+    .#.#.###########.###
+    #.#.#.#####.####.###
+    ###.##.####.##.#..##
+    """
   
+    {lx, ly} = {11, 13}
+    
+    destroyed = Problem10.part2(map, {20, 20})
+    assert {11 - lx, 12 - ly} == destroyed |> Enum.at(0)
+    assert {12 - lx, 1 - ly} == destroyed |> Enum.at(1)
+    assert {12 - lx, 2 - ly} == destroyed |> Enum.at(2)
+    assert {12 - lx, 8 - ly} == destroyed |> Enum.at(9)
+    assert {16 - lx, 0 - ly} == destroyed |> Enum.at(19)
+    assert {16 - lx, 9 - ly} == destroyed |> Enum.at(49)
+    assert {10 - lx, 16 - ly} == destroyed |> Enum.at(99)
+    assert {9 - lx, 6 - ly} == destroyed |> Enum.at(198)
+    assert {8 - lx, 2 - ly} == destroyed |> Enum.at(199)
+    assert {10 - lx, 9 - ly} == destroyed |> Enum.at(200)
+    assert {11 - lx, 1 - ly} == destroyed |> Enum.at(298)
+    
+  end
 
 end
