@@ -140,7 +140,7 @@ defmodule Tests do
     # Let's try the destroy functions
     assert [{0, 2}, {1, 1}] == aset |> Asteroids.visible_from({0, 0}) |> MapSet.to_list |> Enum.sort
     { aset, newly_visible } = aset |> Asteroids.destroy({0, 0}, {1, 1})
-    assert newly_visible == {2, 2}
+    assert newly_visible == [{2, 2}]
     assert [{0, 2}, {2, 2}] == aset |> Asteroids.visible_from({0, 0}) |> MapSet.to_list |> Enum.sort
   end
 
@@ -222,7 +222,7 @@ defmodule Tests do
     assert number_detected == 41
   end
 
-  test "part1" do
+  test "full meal deal" do
     map = """
     ##.###.#.......#.#....#....#..........#.
     ....#..#..#.....#.##.............#......
@@ -268,6 +268,14 @@ defmodule Tests do
     { best_location, number_detected } = Problem10.part1(map, {40, 40})
     assert best_location == {31, 20}
     assert number_detected == 319
+    
+    {lx, ly} = best_location
+    destroyed = Problem10.part2(map, {40, 40})
+    {x, y} = destroyed |> Enum.at(199)
+    {solx, soly} = {x + lx, y + ly}
+    solution = solx * 100 + soly
+    "SOLUTION solx=#{solx} soly=#{soly} solution=#{solution}" |> IO.puts
+
   end
 
   @tag :part2
@@ -331,7 +339,6 @@ defmodule Tests do
     assert {8 - lx, 2 - ly} == destroyed |> Enum.at(199)
     assert {10 - lx, 9 - ly} == destroyed |> Enum.at(200)
     assert {11 - lx, 1 - ly} == destroyed |> Enum.at(298)
-    
   end
 
 end
