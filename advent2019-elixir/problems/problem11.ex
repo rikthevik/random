@@ -267,6 +267,9 @@ defmodule Tests do
     assert r.dir == :dir_left
     r = r |> Robot.turn(:turn_right)
     assert r.dir == :dir_up
+    assert {r.x, r.y} == {0, 0}
+    r = r |> Robot.step_forward(2)
+    assert {r.x, r.y} == {0, 2}
   end
 end
 
