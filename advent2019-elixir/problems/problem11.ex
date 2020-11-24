@@ -74,7 +74,7 @@ defmodule Machine do
 
   defp inner_write(m, addr, val) when addr >= 0 do 
     # !! Had a bug earlier where I wasn't using the addressing
-    #  mode in writes, because they wer all positional before. !!
+    #  mode in writes, because they were all positional before. !!
     # Note that we can write to addresses that weren't 
     # originally in our program.  Free memory!
     %{m|
@@ -225,14 +225,14 @@ defmodule Robot do
       end
     } |> turn_ccw(times-1)
   end
+  
+  defp walk_vec(:dir_up) do {0, 1} end
+  defp walk_vec(:dir_right) do {1, 0} end
+  defp walk_vec(:dir_down) do {0, -1} end
+  defp walk_vec(:dir_left) do {-1, 0} end
 
-  def step_forward(r, steps) do
-    {dx, dy} = case r.dir do
-      :dir_up -> {0, steps}
-      :dir_right -> {steps, 0}
-      :dir_down -> {0, -steps}
-      :dir_left -> {-steps, 0}
-    end
+  def walk_forward(r) do
+    {dx, dy} = walk_vec(r.dir)
     %{r|
       x: r.x + dx,
       y: r.y + dy,
@@ -268,8 +268,13 @@ defmodule Tests do
     r = r |> Robot.turn(:turn_right)
     assert r.dir == :dir_up
     assert {r.x, r.y} == {0, 0}
-    r = r |> Robot.step_forward(2)
-    assert {r.x, r.y} == {0, 2}
+    r = r |> Robot.walk_forward
+    assert {r.x, r.y} == {0, 1}
+    r = r |> Robot.turn(:turn_right)
+    assert r.dir == :dir_right
+    r = r |> Robot.walk_forward
+    r = r |> Robot.walk_forward
+    assert {r.x, r.y} == {2, 1}
   end
 end
 
