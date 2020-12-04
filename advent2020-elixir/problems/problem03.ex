@@ -12,13 +12,13 @@ defmodule Hill do
 
     height = lines |> Enum.count
     width = lines |> Enum.at(0) |> String.length
-    trees = for {y, l} <- Enum.enumerate(lines), x <- 0..(width-1) do
-
-    end |> IO.puts
+    trees = for {l, y} <- Enum.with_index(lines), {c, x} <- Enum.with_index(String.graphemes(l)), c == "#" do
+      {x, y}
+    end |> MapSet.new
 
     %Hill{
       h: height,
-      w: widfth,
+      w: width,
       trees: trees
     }
   end
@@ -47,6 +47,7 @@ defmodule Tests do
 .#..#...#.#")  
     assert h.w == 11
     assert h.h == 11
+    assert h.trees |> Enum.count == 37
   end
 
 
