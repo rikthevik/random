@@ -179,6 +179,7 @@ defmodule Machine do
         { m, :stopped }
       3 when m.input == [] ->
         # If there's no input, block.
+        # Is it this easy?
         { m, :input }
       4 ->
         { m |> instruction(opcode, modes), :output }
@@ -204,6 +205,8 @@ defmodule Robot do
   end
 
   def run(r, new_input) do
+    # I am astonished that this worked so well.
+    # All I did was make it block on input if there is non available.
     run_result = r.m |> Machine.run(new_input)  # camera input
     case run_result do
       {m, :input} -> 
@@ -270,11 +273,37 @@ defmodule Problem do
     
     r.paint_path 
     |> Enum.map(fn {p, color} -> p end)
-    |> IO.inspect
+    # |> IO.inspect
     |> MapSet.new
     |> Enum.count
     |> IO.inspect
   end
+
+  def part2(prog_list, input \\ []) do  
+    r = Robot.new(prog_list)
+    # Start on a white square as per the problem.
+    r = %{r| floor: r.floor |> Map.put({0, 0}, 1)}
+    r = r |> Robot.run([])
+
+    # This code is kind of nasty.  But it's late and it works.
+    white_points = r.floor 
+    |> Enum.filter(fn {p, color} -> color == 1 end) 
+    |> Enum.map(fn {p, color} -> p end)
+    |> MapSet.new
+    {minx, maxx} = white_points |> Enum.map(fn {x, _y} -> x end) |> Enum.min_max
+    {miny, maxy} = white_points |> Enum.map(fn {_x, y} -> y end) |> Enum.min_max
+    for y <- maxy..miny do
+      for x <- minx..maxx do
+        if MapSet.member?(white_points, {x, y}) do
+          "#" |> IO.write
+        else
+          "." |> IO.write
+        end
+      end
+      IO.puts ""
+    end
+  end
+
 
 end
 
@@ -312,6 +341,8 @@ defmodule Tests do
 
     # Holy shit it worked...
     assert 2539 == Problem.part1(prog_list)
+    Problem.part2(prog_list)
+
 
   end
 
