@@ -54,9 +54,27 @@ defmodule Problem do
 
   def step(moons) do step(moons, 1) end
   def step(moons, 0) do [] end
-  def step(moons, iter_count) do
-    
-    moons = for m <- moons do
+  def step(moons, steps_remaining) do
+    # "After #{iter_count} steps: " |> IO.write
+    # moons |> IO.inspect
+    new_moons = move_moons(moons)
+    [new_moons|step(new_moons, steps_remaining-1)]
+  end
+
+  def step2(moons) do
+    step2(moons, 0, MapSet.new |> MapSet.put(moons))
+  end
+  def step2(moons, step_count, visited) do
+    if step_count > 0 and MapSet.member?(visited, moons) do
+      step_count
+    else
+      new_moons = move_moons(moons)
+      step2(new_moons, step_count+1, MapSet.put(visited, moons))
+    end
+  end
+  
+  def move_moons(moons) do
+    for m <- moons do
       vel = for o <- moons, m.name != o.name do
         m |> Moon.gravity_vec(o)
       end 
@@ -66,11 +84,6 @@ defmodule Problem do
         vel: vel
       }
     end
-
-    # "After #{iter_count} steps: " |> IO.write
-    # moons |> IO.inspect
-
-    [moons|step(moons, iter_count-1)]
   end
 
   def part1(rows, steps) do
@@ -82,11 +95,14 @@ defmodule Problem do
     |> Enum.at(-1)
     |> Enum.map(&Moon.total_energy/1)
     |> Enum.sum
-    
   end
 
   def part2(rows) do
-    
+    names = [:io, :eu, :gm, :ca]
+    moons = for {name, v} <- Enum.zip(names, rows) do Moon.new(name, v) end
+    |> IO.inspect
+
+    step2(moons)
   end
 
 end
@@ -102,6 +118,7 @@ defmodule Tests do
       {3, 5, -1},
     ]
     assert 179 == rows |> Problem.part1(10)
+    assert 2772 == rows |> Problem.part2
   end
 
   test "example 2" do
@@ -112,6 +129,7 @@ defmodule Tests do
       {9, -8, -3},
     ]
     assert 1940 == rows |> Problem.part1(100)
+    assert 4686774924 == rows |> Problem.part2
   end
 
   test "go time" do
@@ -121,7 +139,7 @@ defmodule Tests do
       {-6, 14, -4},
       {4, -4, -3}
     ]
-    assert 1940 == rows |> Problem.part1(1000)
+    assert 9999 == rows |> Problem.part1(1000)
   end
 
 end
