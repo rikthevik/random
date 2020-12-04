@@ -25,9 +25,56 @@ defmodule Problem do
 
   def valid_part1?(r) do
     required_keys = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
-    optional_keys = ["cid"]
     required_keys 
     |> Enum.all?(fn key -> Map.has_key?(r, key) end)
+  end
+
+  def key_valid("byr", val) do
+    intval = String.to_integer(val)
+    1920 <= intval and intval <= 2002
+  end
+  def key_valid("iyr", val) do
+    intval = String.to_integer(val)
+    2010 <= intval and intval <= 2020
+  end
+  def key_valid("eyr", val) do
+    intval = String.to_integer(val)
+    2020 <= intval and intval <= 2030
+  end
+  def key_valid("hgt", val) do
+    if String.match?(val, ~r/^\d+(in|cm)$/) do
+      intval = String.to_integer(val |> String.replace(~r/(cm|in)$/, ""))
+      if String.ends_with?(val, "in") do
+        59 <= intval and intval <= 76
+      else
+        150 <= intval and intval <= 193
+      end
+    else
+      false
+    end
+  end
+  def key_valid("hcl", val) do
+    String.match?(val, ~r/^#[0-9a-f]{6}$/)
+  end
+  def key_valid("ecl", val) do
+    String.match?(val, ~r/^(amb|blu|brn|gry|grn|hzl|oth)$/)
+  end
+  def key_valid("pid", val) do
+    String.match?(val, ~r/^[0-9]{9}$/)
+  end
+  def key_valid("cid", val) do
+    true
+  end
+
+
+  def valid_part2?(r) do
+    required_keys = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
+    Enum.all?(required_keys, fn key -> Map.has_key?(r, key) end) and 
+      Enum.all?(for {k, v} <- r do
+        result = key_valid(k, v)
+        "key_valid #{k} #{v} => #{result}" |> IO.puts
+        result
+      end)
   end
 
   def part1(rows) do
@@ -36,8 +83,10 @@ defmodule Problem do
     |> Enum.count
   end
 
-  def part2(h) do
-   
+  def part2(rows) do
+    rows
+    |> Enum.filter(&valid_part2?/1)
+    |> Enum.count
   end
 
 end
@@ -61,6 +110,58 @@ defmodule Tests do
    iyr:2011 ecl:brn hgt:59in" 
     assert inputstr |> Problem.load |> Problem.part1 == 2
 
+  end
+
+  test "example 2" do
+
+    assert Problem.key_valid("byr", "2002") == true
+    assert Problem.key_valid("byr", "2003") == false
+    assert Problem.key_valid("hgt", "60in") == true
+    assert Problem.key_valid("hgt", "190cm") == true
+    assert Problem.key_valid("hgt", "190in") == false
+    assert Problem.key_valid("hgt", "190") == false
+    assert Problem.key_valid("hcl", "#123abc") == true
+    assert Problem.key_valid("hcl", "#123abz") == false
+    assert Problem.key_valid("hcl", "abc123") == false
+    assert Problem.key_valid("ecl", "brn") == true
+    assert Problem.key_valid("ecl", "wat") == false
+    assert Problem.key_valid("pid", "000000001") == true
+    assert Problem.key_valid("pid", "0123456789") == false
+
+    
+    inputstr = "pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+    hcl:#623a2f"
+    assert inputstr |> Problem.load |> Problem.part2 == 1
+
+    inputstr = "eyr:1972 cid:100
+    hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
+    
+    iyr:2019
+    hcl:#602927 eyr:1967 hgt:170cm
+    ecl:grn pid:012533040 byr:1946
+    
+    hcl:dab227 iyr:2012
+    ecl:brn hgt:182cm pid:021572410 eyr:2020 byr:1992 cid:277
+    
+    hgt:59cm ecl:zzz
+    eyr:2038 hcl:74454a iyr:2023
+    pid:3556412378 byr:2007
+    
+    pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+    hcl:#623a2f
+    
+    eyr:2029 ecl:blu cid:129 byr:1989
+    iyr:2014 pid:896056539 hcl:#a97842 hgt:165cm
+    
+    hcl:#888785
+    hgt:164cm byr:2001 iyr:2015 cid:88
+    pid:545766238 ecl:hzl
+    eyr:2022
+    
+    iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719"
+    assert inputstr |> Problem.load |> Problem.part2 == 4
+
+    
   end
 
   test "go time" do
@@ -1074,7 +1175,7 @@ defmodule Tests do
     pid:455361219 hgt:153cm eyr:2027 hcl:#6b5442
     byr:1965" 
     assert inputstr |> Problem.load |> Problem.part1 == 204
- 
+    assert inputstr |> Problem.load |> Problem.part2 == 179
     
   end
 
