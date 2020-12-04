@@ -188,7 +188,7 @@ defmodule Machine do
 end
 
 defmodule Robot do
-  defstruct [:m, :dir, :x, :y, :paint_path, :floor]
+  defstruct [:m, :dir, :x, :y, :paint_path]
   def new(prog_list) do
     %Robot{
       m: Machine.new(prog_list, "roBBo"),
@@ -196,16 +196,11 @@ defmodule Robot do
       x: 0,
       y: 0,
       paint_path: [],   # [{{x, y}, color}]
-      # Maybe floor doesn't belong inside the robot.
-      # For this problem maybe that's okay.
-      # Maybe part2 is multiple robots running at once...
-      floor: Map.new,   # {{x, y} => color}, default black.
     }
   end
 
   def paint(r, color) do
     %{r|
-      floor: r.floor |> Map.put({r.x, r.y}, color),
       paint_path: r.paint_path ++ [{r.x, r.y}, color],
     }
   end
@@ -214,8 +209,8 @@ defmodule Robot do
   # Turning right is like turning left 3 times.
   def turn(r, :turn_right) do r |> turn_ccw(3) end
   
-  def turn_ccw(r, 0) do r end
-  def turn_ccw(r, times) when times > 0 do
+  defp turn_ccw(r, 0) do r end
+  defp turn_ccw(r, times) when times > 0 do
     %{r|
       dir: case r.dir do
         :dir_up -> :dir_left
@@ -241,12 +236,33 @@ defmodule Robot do
 end
 
 defmodule Problem11 do
-  
+  defstruct [:robot, :floor]
+
   def part1(prog_list, input \\ []) do
-    prog_list
-    |> Machine.new("p09p1")
-    |> Machine.run_until_stop(input)
+    p = %{
+      robot: Robot.new(prog_list)
+      floor: Map.new
+    }
   end
+
+  def run(p) do
+    run_result = p.robot |> Robot.run
+    
+
+    end
+  end
+
+  def robot_run(prob, {:stopped, r}) do %{prob| robot: r} end
+  def robot_run(prob, {:paint, color, r}) do
+    %{prob|
+      floor: prob.floor |> Map.put({prob.robot.x, prob.robot.y}, color)
+    }
+  end
+  def robot_run(prob, {:floor_camera, color}) do
+    floor_color = prob.floor |> Map.get({prob.robot.x})
+
+  end
+
 end
 
 defmodule Tests do 
@@ -277,4 +293,3 @@ defmodule Tests do
     assert {r.x, r.y} == {2, 1}
   end
 end
-
