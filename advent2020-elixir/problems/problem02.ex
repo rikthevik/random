@@ -8,19 +8,30 @@ end
 
 
 defmodule Problem01 do
-  def is_valid(pwline) do
-    pwline |> IO.inspect
+  def part1_valid(pwline) do
     freq = Util.frequencies(pwline.s)[pwline.c]
-    |> IO.inspect
     freq >= pwline.lo and freq <= pwline.hi
+  end
+
+  def part2_valid(pwline) do
+    lo = String.at(pwline.s, pwline.lo-1) |> IO.inspect
+    hi = String.at(pwline.s, pwline.hi-1) |> IO.inspect
+    pwline |> IO.inspect
+    (lo == pwline.c and hi != pwline.c) or (lo != pwline.c and hi == pwline.c)
   end
 
   def part1(pwlines) do
     pwlines
-    |> Enum.filter(&is_valid/1)
-    |> IO.inspect
+    |> Enum.filter(&part1_valid/1)
     |> Enum.count
   end
+
+  def part2(pwlines) do
+    pwlines
+    |> Enum.filter(&part2_valid/1)
+    |> Enum.count
+  end
+
 end
 
 defmodule Tests do 
@@ -40,10 +51,6 @@ defmodule Tests do
     |> String.trim
     |> String.split("\n")
     |> Enum.map(fn s -> Regex.named_captures(regex, s) |> build end)
-    |> IO.inspect
-    
-    # |> IO.inspect
-    # |> Map.new
   end
 
   test "frequencies" do
@@ -56,8 +63,8 @@ defmodule Tests do
 1-3 b: cdefg
 2-9 c: ccccccccc"
     |> prepare() 
-    pwlines |> IO.inspect
     assert Problem01.part1(pwlines) == 2
+    assert Problem01.part2(pwlines) == 1
   end
 
   test "part1" do
@@ -1062,8 +1069,8 @@ defmodule Tests do
 7-9 t: ttzmqqdtqtt
 6-19 g: gggggggggggggggggggg"
     |> prepare() 
-    pwlines |> IO.inspect
     assert Problem01.part1(pwlines) == 465
+    assert Problem01.part2(pwlines) == 294
   end
 
 end
