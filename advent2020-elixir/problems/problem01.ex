@@ -6,11 +6,21 @@ end
 
 defmodule Problem01 do
   def part1(ints) do
+    # find 2 ints that sum up to 2020
     for a <- ints, b <- ints, a != b, a+b == 2020 do
       a * b
     end
     |> Enum.at(0)
   end
+
+  def part2(ints) do
+    # find 3 ints that sum up to 2020
+    for a <- ints, b <- ints, c <- ints, a != b, b != c, a != c, a+b+c == 2020 do
+      a * b * c
+    end
+    |> Enum.at(0)
+  end
+
 end
 
 defmodule Tests do 
@@ -32,6 +42,7 @@ defmodule Tests do
 1456"
     |> prepare
     assert Problem01.part1(ints) == 514579
+    assert Problem01.part2(ints) == 241861950
   end
 
   test "go time" do
@@ -237,7 +248,7 @@ defmodule Tests do
 1831"
     |> prepare
     assert Problem01.part1(ints) == 121396
-  
+    assert Problem01.part2(ints) == 73616634
   end
 
 
