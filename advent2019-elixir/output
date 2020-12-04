@@ -1,0 +1,32 @@
+PC=0 OPCODE 3 %{0 => :read_positional, 1 => :read_positional, 2 => :read_positional}
+machine1 read_input() => 123
+PC=2 OPCODE 4 %{0 => :read_positional, 1 => :read_positional, 2 => :read_positional}
+machine1 write_output(123)
+{%Machine{
+   id: "machine1",
+   input: [],
+   output: '{',
+   pc: 4,
+   prog: %{0 => 123, 1 => 0, 2 => 4, 3 => 0, 4 => 99}
+ }, :output}
+PC=4 OPCODE 99 %{0 => :read_positional, 1 => :read_positional, 2 => :read_positional}
+{%Machine{
+   id: "machine1",
+   input: [],
+   output: '{',
+   pc: 4,
+   prog: %{0 => 123, 1 => 0, 2 => 4, 3 => 0, 4 => 99}
+ }, :stopped}
+{%Machine{
+   id: "machine1",
+   input: [],
+   output: '{',
+   pc: 4,
+   prog: %{0 => 123, 1 => 0, 2 => 4, 3 => 0, 4 => 99}
+ }, :stopped}
+.
+
+Finished in 0.2 seconds
+1 test, 0 failures
+
+Randomized with seed 753586

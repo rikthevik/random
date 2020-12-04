@@ -32,7 +32,7 @@ defmodule Hill do
 
 end
 
-defmodule Problem01 do
+defmodule Problem do
   def path({x, y}, {dx, dy}) do
     # don't worry about the bounds, just keep going
     for i <- 0..1000 do
@@ -40,12 +40,22 @@ defmodule Problem01 do
     end
   end
 
-  def part1(h) do
-    path({0, 0}, {3, 1})
+  def tree_count(h, {x, y}, {dx, dy}) do
+    path({x, y}, {dx, dy})
     |> Enum.filter(fn p -> Hill.is_tree?(h, p) end)
-    # |> IO.inspect
     |> Enum.count
   end
+
+  def part1(h) do
+    tree_count(h, {0, 0}, {3, 1})
+  end
+
+  def part2(h) do
+    [{1, 1}, {3, 1}, {5, 1}, {7, 1}, {1, 2}]
+    |> Enum.map(fn vec -> tree_count(h, {0, 0}, vec) end)
+    |> Enum.reduce(1, fn (a, b) -> a * b end)
+  end
+
 end
 
 defmodule Tests do 
@@ -66,7 +76,8 @@ defmodule Tests do
     assert h.w == 11
     assert h.h == 11
     assert h.trees |> Enum.count == 37
-    assert 7 == Problem01.part1(h)
+    assert 7 == Problem.part1(h)
+    assert 336 == Problem.part2(h)
 
   end
 
@@ -394,8 +405,8 @@ defmodule Tests do
 .#...#........#..#.#..#...##..#
 ..###........#......#.#........
 ..#.##.#....#.#....#.#...#.....")  
-    assert 284 == Problem01.part1(h)
-
+    assert 284 == Problem.part1(h)
+    assert 284 == Problem.part2(h)
   end
 
 

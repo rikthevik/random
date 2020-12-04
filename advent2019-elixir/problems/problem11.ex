@@ -177,6 +177,9 @@ defmodule Machine do
     case opcode do
       99 ->
         { m, :stopped }
+      3 when m.input == [] ->
+        # If there's no input, block.
+        { m, :input }
       4 ->
         { m |> instruction(opcode, modes), :output }
       _ ->
@@ -188,7 +191,7 @@ defmodule Machine do
 end
 
 defmodule Robot do
-  defstruct [:m, :dir, :x, :y, :paint_path]
+  defstruct [:m, :dir, :x, :y, :floor, :paint_path]
   def new(prog_list) do
     %Robot{
       m: Machine.new(prog_list, "roBBo"),
@@ -196,19 +199,39 @@ defmodule Robot do
       x: 0,
       y: 0,
       paint_path: [],   # [{{x, y}, color}]
+      floor: Map.new  # fuck it, let's store the floor here
     }
+  end
+
+  def run(r, new_input) do
+    run_result = r.m |> Machine.run(new_input)  # camera input
+    case run_result do
+      {m, :input} -> 
+        floor_color = r.floor |> Map.get({r.x, r.y}, 0)
+        %{r| m: m}
+          |> run([floor_color])
+      {m, :output} ->
+        paint_color = m.output |> Enum.at(0)
+        {m, :output} = m |> Machine.run([])  # get another output
+        turn_dir = m.output |> Enum.at(0)
+        %{r| m: m}
+          |> paint(paint_color)
+          |> turn(turn_dir)
+          |> walk_forward()
+          |> run([])
+      {m, :stopped} -> r
+    end    
   end
 
   def paint(r, color) do
     %{r|
-      paint_path: r.paint_path ++ [{r.x, r.y}, color],
+      floor: r.floor |> Map.set({r.x, r.y}, color),
+      paint_path: r.paint_path ++ [{{r.x, r.y}, color}],
     }
   end
 
-  def turn(r, :turn_left) do r |> turn_ccw(1) end
-  # Turning right is like turning left 3 times.
-  def turn(r, :turn_right) do r |> turn_ccw(3) end
-  
+  def turn(r, 0) do r |> turn_ccw(1) end
+  def turn(r, 1) do r |> turn_ccw(3) end  # Turning right is like turning left 3 times.
   defp turn_ccw(r, 0) do r end
   defp turn_ccw(r, times) when times > 0 do
     %{r|
@@ -221,11 +244,6 @@ defmodule Robot do
     } |> turn_ccw(times-1)
   end
   
-  defp walk_vec(:dir_up) do {0, 1} end
-  defp walk_vec(:dir_right) do {1, 0} end
-  defp walk_vec(:dir_down) do {0, -1} end
-  defp walk_vec(:dir_left) do {-1, 0} end
-
   def walk_forward(r) do
     {dx, dy} = walk_vec(r.dir)
     %{r|
@@ -233,34 +251,21 @@ defmodule Robot do
       y: r.y + dy,
     }
   end
+  defp walk_vec(:dir_up) do {0, 1} end
+  defp walk_vec(:dir_right) do {1, 0} end
+  defp walk_vec(:dir_down) do {0, -1} end
+  defp walk_vec(:dir_left) do {-1, 0} end
+
 end
 
 defmodule Problem11 do
-  defstruct [:robot, :floor]
+  defstruct [:robot]
 
   def part1(prog_list, input \\ []) do
     p = %{
-      robot: Robot.new(prog_list)
-      floor: Map.new
+      robot: Robot.new(prog_list),     
     }
-  end
-
-  def run(p) do
-    run_result = p.robot |> Robot.run
-    
-
-    end
-  end
-
-  def robot_run(prob, {:stopped, r}) do %{prob| robot: r} end
-  def robot_run(prob, {:paint, color, r}) do
-    %{prob|
-      floor: prob.floor |> Map.put({prob.robot.x, prob.robot.y}, color)
-    }
-  end
-  def robot_run(prob, {:floor_camera, color}) do
-    floor_color = prob.floor |> Map.get({prob.robot.x})
-
+    |> Robot.run([])
   end
 
 end
@@ -279,17 +284,20 @@ defmodule Tests do
   test "robot movement" do
     r = Robot.new([])
     assert r.dir == :dir_up
-    r = r |> Robot.turn(:turn_left)
+    r = r |> Robot.turn(0)
     assert r.dir == :dir_left
-    r = r |> Robot.turn(:turn_right)
+    r = r |> Robot.turn(1)
     assert r.dir == :dir_up
     assert {r.x, r.y} == {0, 0}
     r = r |> Robot.walk_forward
     assert {r.x, r.y} == {0, 1}
-    r = r |> Robot.turn(:turn_right)
+    r = r |> Robot.turn(1)
     assert r.dir == :dir_right
     r = r |> Robot.walk_forward
     r = r |> Robot.walk_forward
     assert {r.x, r.y} == {2, 1}
+
+
+
   end
 end
