@@ -17,6 +17,9 @@ defmodule Problem do
     |> String.to_integer(2)
   end
 
+  def seat_id({row, col}) do
+    row * 8 + col
+  end
   
   def find_seat(s) do
     row = s |> String.slice(0..6) |> bsp_to_int
@@ -39,6 +42,7 @@ defmodule Tests do
   
   test "examples" do
     assert Problem.find_seat("BFFFBBFRRR") == {70, 7}
+    assert Problem.find_seat("BFFFBBFRRR") |> Problem.seat_id == 567
     assert Problem.find_seat("FFFBBBFRRR") == {14, 7}
     assert Problem.find_seat("BBFFBBFRLL") == {102, 4}
 
