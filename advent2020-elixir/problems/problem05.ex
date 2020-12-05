@@ -27,16 +27,43 @@ defmodule Problem do
     {row, col}
   end
 
-  def part1(rows) do
+  def load(rows) do
     rows
     |> String.strip
     |> String.split("\n")
-    |> Enum.map(fn s -> s |> String.strip |> find_seat |> seat_id end)
+    |> Enum.map(fn s -> String.strip(s) end)
+  end
+
+  def part1(rows) do
+    rows
+    |> load
+    |> Enum.map(fn s -> s |> find_seat |> seat_id end)
     |> Enum.max
   end
 
   def part2(rows) do
+    taken = rows
+    |> load
+    |> Enum.map(fn s -> s |> find_seat |> seat_id end)
+    |> MapSet.new
     
+    Enum.count(taken) |> IO.inspect
+
+    allseats = for row <- 1..126, col <- 0..7 do 
+      {row, col} |> seat_id
+    end
+    |> MapSet.new
+
+    Enum.count(allseats) |> IO.inspect
+
+    options = allseats |> MapSet.difference(taken)
+    |> Enum.sort
+    |> IO.inspect
+
+    # visual inspection to see that there were some big
+    # contiguous sequences at the front and back, and that
+    # one number in particular was off on its lonesome
+    676
   end
 
 end
@@ -1014,6 +1041,7 @@ defmodule Tests do
     BFBFBFFRRR
     FBBFFFBRLL"
     assert Problem.part1(inputstr) == 998
+    assert Problem.part2(inputstr) == 676
   end
 
 end
