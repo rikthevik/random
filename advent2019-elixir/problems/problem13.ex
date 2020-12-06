@@ -210,7 +210,7 @@ defmodule Problem do
     draw_screen(screen)
 
     screen
-    |> Enum.filter(fn {{_x, _y}, v} -> v == 1 end)
+    |> Enum.filter(fn {{_x, _y}, v} -> v == 2 end)
     |> Enum.count
   end
 
@@ -225,12 +225,12 @@ defmodule Problem do
     end
   end
 
-  def screen_char(nil) do " " end
-  def screen_char(0) do "." end
-  def screen_char(1) do "#" end
-  def screen_char(2) do "w" end
-  def screen_char(3) do "-" end
-  def screen_char(4) do "@" end
+  def screen_char(nil) do " " end  # ???
+  def screen_char(0) do "." end    # empty
+  def screen_char(1) do "#" end    # wall
+  def screen_char(2) do "w" end    # block
+  def screen_char(3) do "-" end    # horiz paddle
+  def screen_char(4) do "@" end    # ball
 
   def part1(prog_list, input \\ []) do  
     run(prog_list)
