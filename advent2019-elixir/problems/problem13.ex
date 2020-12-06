@@ -119,7 +119,7 @@ defmodule Machine do
     # read the most recent input and store in target addr
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
-    "#{m.id} read_input() => #{input_val}" |> IO.puts
+    # "#{m.id} read_input() => #{input_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
       input: remaining_input
@@ -201,12 +201,12 @@ defmodule Problem do
     %{p| score: score}
   end
   def process_chunk(p, [x, y, 3]) do
-    " SET PADDLE = #{x},#{y}" |> IO.puts
+    # " SET PADDLE = #{x},#{y}" |> IO.puts
     %{p| paddlex: x, paddley: y}
     |> add_to_screen({x, y}, 3)
   end
   def process_chunk(p, [x, y, 4]) do
-    " SET BALL = #{x},#{y}" |> IO.puts
+    # " SET BALL = #{x},#{y}" |> IO.puts
     %{p| ballx: x, bally: y}
     |> add_to_screen({x, y}, 4)
   end
@@ -226,10 +226,9 @@ defmodule Problem do
     p = %{p| 
       m: %{p.m| output: []}  # clear the output
     } |> process_chunks(output_chunks)
-    # draw_screen(p.screen)
-    # " SCORE: #{p.score}" |> IO.puts
-    # "" |> IO.puts
-    # :timer.sleep(100)
+    draw_screen(p.screen)
+    " SCORE: #{p.score}" |> IO.puts
+    :timer.sleep(5)
     p
   end
   def process_chunks(p, []) do p end
@@ -295,7 +294,7 @@ defmodule Problem do
       {m, :input} -> 
         p = %{p| m: m} |> process_output
         joy_input = joystick_input(p.paddlex, p.ballx)
-        "supplying paddlex=#{p.paddlex} ballx=#{p.ballx} joystick_input=#{inspect joy_input}" |> IO.puts
+        # "supplying paddlex=#{p.paddlex} ballx=#{p.ballx} joystick_input=#{inspect joy_input}" |> IO.puts
         frame(p, joy_input)
       {m, :stopped} ->
         %{p| m: m} |> process_output
@@ -326,7 +325,7 @@ defmodule Tests do
 
     # Holy shit it worked...
     assert 180 == Problem.part1(prog_list)
-    Problem.part2(prog_list)
+    assert 8777 = Problem.part2(prog_list)
 
 
   end
