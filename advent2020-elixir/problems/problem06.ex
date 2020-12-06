@@ -19,14 +19,33 @@ defmodule Problem do
     |> Enum.map(&load_row/1)
   end
 
+  def load2(inputstr) do
+    inputstr
+    |> String.trim
+    |> String.split(~r/\n *\n/)
+    |> Enum.map(fn s -> s |> String.trim |> String.split(~r/ *\n */) end)
+    |> IO.inspect
+  end
+
   def part1(rows) do
     rows
     |> Enum.map(fn s -> s |> String.graphemes |> MapSet.new |> Enum.count end)
     |> Enum.sum
   end
 
+
+  def valid_count(group) do
+    # each line in the group is a set, we want the intersection of all the sets
+    group 
+    |> Enum.map(fn s -> s |> String.graphemes |> MapSet.new end)
+    |> Enum.reduce(fn (a, b) -> MapSet.intersection(a, b) end)
+    |> Enum.count
+  end
+
   def part2(rows) do
-   
+    rows
+    |> Enum.map(&valid_count/1)
+    |> Enum.sum
   end
 
 end
@@ -52,6 +71,8 @@ defmodule Tests do
     b"
     assert ["abc", "abc", "abac", "aaaa", "b"] == inputstr |> Problem.load
     assert 11 == inputstr |> Problem.load |> Problem.part1
+    assert [["abc"], ["a", "b", "c"], ["ab", "ac"], ["a", "a", "a", "a"], ["b"]] == inputstr |> Problem.load2
+    assert 6 == inputstr |> Problem.load2 |> Problem.part2
   end
 
   test "go time " do
@@ -2156,6 +2177,7 @@ defmodule Tests do
     squmrdowjy
     iusrcmzyodh
     rnlsdmxuyefoz"
-    assert 11 == inputstr |> Problem.load |> Problem.part1
+    assert 6726 == inputstr |> Problem.load |> Problem.part1
+    assert 6 == inputstr |> Problem.load2 |> Problem.part2
     end
 end
