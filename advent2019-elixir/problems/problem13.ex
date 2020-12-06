@@ -10,7 +10,7 @@
 defmodule Util do
   # :math.pow() is all about floats and i don't want to convert back
   # and this looks like CMPT 340 homework  :)
-  def ipow(i, 0) do 1 end
+  def ipow(_i, 0) do 1 end
   def ipow(i, exponent) when exponent > 0 do
     i * ipow(i, exponent-1)
   end
@@ -62,7 +62,7 @@ defmodule Machine do
     # If this isn't value included in our program, read a 0.
     m.prog |> Map.get(addr, 0)
   end
-  def read(m, val, :immediate) do
+  def read(_m, val, :immediate) do
     val
   end
   def read(m, addr, :positional) do
@@ -119,7 +119,7 @@ defmodule Machine do
     # read the most recent input and store in target addr
     target_addr = m.prog[m.pc+1]
     [input_val|remaining_input] = m.input
-    # "#{m.id} read_input() => #{input_val}" |> IO.puts
+    "#{m.id} read_input() => #{input_val}" |> IO.puts
     %{m|
       pc: m.pc + 2,
       input: remaining_input
@@ -195,23 +195,46 @@ end
 
 
 defmodule Problem do
+  defstruct [:m, :score, :screen, :ballx, :bally, :paddlex, :paddley]
 
-  def run(prog_list) do
-    m = prog_list
-    |> Machine.new("bintento")
-    |> Machine.run_until_stop
-    
-    output = m.output |> Enum.reverse
-    screen = for chunk <- output |> Enum.chunk_every(3), into: %{} do
-      {x, y, tile_id} = chunk |> List.to_tuple
-      {{x, y}, tile_id}
-    end
+  def process_chunk(p, [-1, 0, score]) do 
+    %{p| score: score}
+  end
+  def process_chunk(p, [x, y, 3]) do
+    " SET PADDLE = #{x},#{y}" |> IO.puts
+    %{p| paddlex: x, paddley: y}
+    |> add_to_screen({x, y}, 3)
+  end
+  def process_chunk(p, [x, y, 4]) do
+    " SET BALL = #{x},#{y}" |> IO.puts
+    %{p| ballx: x, bally: y}
+    |> add_to_screen({x, y}, 4)
+  end
+  def process_chunk(p, [x, y, v]) when 0 <= v and v <= 2 do
+    p
+    |> add_to_screen({x, y}, v)
+  end
 
-    draw_screen(screen)
+  def add_to_screen(p, {x, y}, v) do
+    %{p|
+      screen: p.screen |> Map.put({x, y}, v)
+    }
+  end
 
-    screen
-    |> Enum.filter(fn {{_x, _y}, v} -> v == 2 end)
-    |> Enum.count
+  def process_output(p) do
+    output_chunks = p.m.output |> Enum.reverse |> Enum.chunk_every(3)
+    p = %{p| 
+      m: %{p.m| output: []}  # clear the output
+    } |> process_chunks(output_chunks)
+    # draw_screen(p.screen)
+    # " SCORE: #{p.score}" |> IO.puts
+    # "" |> IO.puts
+    # :timer.sleep(100)
+    p
+  end
+  def process_chunks(p, []) do p end
+  def process_chunks(p, [chunk|chunks]) do
+    process_chunks(process_chunk(p, chunk), chunks)
   end
 
   def draw_screen(screen) do
@@ -227,19 +250,62 @@ defmodule Problem do
 
   def screen_char(nil) do " " end  # ???
   def screen_char(0) do "." end    # empty
-  def screen_char(1) do "#" end    # wall
+  def screen_char(1) do "o" end    # wall
   def screen_char(2) do "w" end    # block
   def screen_char(3) do "-" end    # horiz paddle
   def screen_char(4) do "@" end    # ball
 
-  def part1(prog_list, input \\ []) do  
-    run(prog_list)
-  end
-
-  def part2(prog_list, input \\ []) do  
+  def part1(prog_list) do  
+    m = prog_list
+    |> Machine.new("bintento")
+    |> Machine.run_until_stop
     
+    p = %Problem{
+      m: m,
+      screen: Map.new,
+    }
+    p = process_output(p)
+    p.screen
+    |> Enum.filter(fn {{_x, _y}, v} -> v == 2 end)
+    |> Enum.count
   end
 
+  def part2(prog_list) do  
+    # set the free play
+    prog_list = [2|Enum.slice(prog_list, 1..Enum.count(prog_list))]
+
+    m = prog_list
+    |> Machine.new("bintento")
+    
+    output = m.output |> Enum.reverse
+    p = %Problem{
+      m: m,
+      screen: Map.new,
+      score: 0,
+    }
+    p2 = frame(p, [])
+    p2.score |> IO.inspect
+  end
+
+  def frame(p, input) do
+    
+    case Machine.run(p.m, input) do
+      {m, :output} ->
+        frame(%{p| m: m}, [])
+      {m, :input} -> 
+        p = %{p| m: m} |> process_output
+        joy_input = joystick_input(p.paddlex, p.ballx)
+        "supplying paddlex=#{p.paddlex} ballx=#{p.ballx} joystick_input=#{inspect joy_input}" |> IO.puts
+        frame(p, joy_input)
+      {m, :stopped} ->
+        %{p| m: m} |> process_output
+    end
+  end
+
+  def joystick_input(paddlex, ballx) when paddlex > ballx do [-1] end
+  def joystick_input(paddlex, ballx) when paddlex < ballx do [+1] end
+  def joystick_input(paddlex, ballx) when paddlex == ballx do [0] end
+  
 end
 
 defmodule Tests do 
@@ -259,7 +325,7 @@ defmodule Tests do
     |> prepare_prog_string
 
     # Holy shit it worked...
-    assert 76 == Problem.part1(prog_list)
+    assert 180 == Problem.part1(prog_list)
     Problem.part2(prog_list)
 
 
