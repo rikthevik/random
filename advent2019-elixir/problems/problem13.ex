@@ -191,14 +191,49 @@ defmodule Machine do
   end
 end
 
-defmodule Game do
+  
 
-end
 
 defmodule Problem do
 
+  def run(prog_list) do
+    m = prog_list
+    |> Machine.new("bintento")
+    |> Machine.run_until_stop
+    
+    output = m.output |> Enum.reverse
+    screen = for chunk <- output |> Enum.chunk_every(3), into: %{} do
+      {x, y, tile_id} = chunk |> List.to_tuple
+      {{x, y}, tile_id}
+    end
+
+    draw_screen(screen)
+
+    screen
+    |> Enum.filter(fn {{_x, _y}, v} -> v == 1 end)
+    |> Enum.count
+  end
+
+  def draw_screen(screen) do
+    {minx, maxx} = screen |> Enum.map(fn {{x, _y}, _v} -> x end) |> Enum.min_max
+    {miny, maxy} = screen |> Enum.map(fn {{_x, y}, _v} -> y end) |> Enum.min_max
+    for y <- miny..maxy do
+      for x <- minx..maxx do
+        screen_char(Map.get(screen, {x, y})) |> IO.write
+      end
+      IO.puts ""
+    end
+  end
+
+  def screen_char(nil) do " " end
+  def screen_char(0) do "." end
+  def screen_char(1) do "#" end
+  def screen_char(2) do "w" end
+  def screen_char(3) do "-" end
+  def screen_char(4) do "@" end
+
   def part1(prog_list, input \\ []) do  
-  
+    run(prog_list)
   end
 
   def part2(prog_list, input \\ []) do  
@@ -224,7 +259,7 @@ defmodule Tests do
     |> prepare_prog_string
 
     # Holy shit it worked...
-    assert 2539 == Problem.part1(prog_list)
+    assert 76 == Problem.part1(prog_list)
     Problem.part2(prog_list)
 
 
