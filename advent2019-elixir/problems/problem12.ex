@@ -12,6 +12,22 @@ defmodule Util do
     {ax+bx, ay+by, az+bz}
   end
 
+  def sign(0) do 0 end
+  def sign(delta) when delta > 0 do +1 end
+  def sign(delta) when delta < 0 do -1 end
+
+  def lcm(0, 0) do 0 end
+  def lcm(a, b) do 
+    floor((a*b)/Integer.gcd(a,b))
+  end
+
+  # found online
+  def transpose(rows) do
+    rows
+    |> List.zip
+    |> Enum.map(&Tuple.to_list/1)
+  end
+
   # I'd use itertools for this, thanks to rosettacode.
   def combinations(_, 0), do: [[]] 
   def combinations([], _), do: [] 
@@ -50,6 +66,26 @@ defmodule Moon do
   defp gravity_elem(delta) when delta < 0 do -1 end
 end
 
+defmodule MoonAxis do
+
+  def new([pa, pb, pc, pd]) do
+    {{pa, pb, pc, pd}, {0, 0, 0, 0}}
+  end
+
+  def step({{pa, pb, pc, pd}, {va, vb, vc, vd}}) do
+    # broke this out a little, not sure if it helps
+    va = va + grav(pa, [pb, pc, pd])
+    vb = vb + grav(pb, [pa, pc, pd])
+    vc = vc + grav(pc, [pa, pb, pd])
+    vd = vd + grav(pd, [pa, pb, pc])
+    {{pa+va, pb+vb, pc+vc, pd+vd}, {va, vb, vc, vd}}
+  end
+  defp grav(p, others) do
+    others |> Enum.map(fn o -> Util.sign(o-p) end) |> Enum.sum
+  end
+
+end
+
 defmodule Problem do
 
   def step(moons) do step(moons, 1) end
@@ -61,20 +97,19 @@ defmodule Problem do
     [new_moons|step(new_moons, steps_remaining-1)]
   end
 
-  def step2(moons) do
-    step2(moons, 0, MapSet.new |> MapSet.put(moons))
+  def step2(axis) do
+    step2(axis, 0, MapSet.new |> MapSet.put(axis))
   end
-  def step2(moons, step_count, visited) do
-    if Integer.mod(step_count, 1000) == 0 do
+  def step2(axis, step_count, visited) do
+    if step_count > 0 and Integer.mod(step_count, 100) == 0 do
       step_count |> IO.inspect
     end
 
-    if step_count > 0 and MapSet.member?(visited, moons) do
+    if step_count > 0 and MapSet.member?(visited, axis) do
       step_count
     else
-      new_moons = move_moons(moons)
-      step2(new_moons, step_count+1, visited)
-      # step2(new_moons, step_count+1, MapSet.put(visited, moons))
+      new_axis = axis |> MoonAxis.step
+      step2(new_axis, step_count+1, MapSet.put(visited, axis))
     end
   end
   
@@ -103,11 +138,18 @@ defmodule Problem do
   end
 
   def part2(rows) do
-    names = [:io, :eu, :gm, :ca]
-    moons = for {name, v} <- Enum.zip(names, rows) do Moon.new(name, v) end
+    
+    # yuck.  is there a better way to transpose this thing?
+    [xs, ys, zs] = 0..2 
+    |> Enum.map(fn i -> for r <- rows do r |> Tuple.to_list |> Enum.at(i) end end)
     |> IO.inspect
+    
+    [xs, ys, zs] = Util.transpose(rows)
+    xcycle = xs |> MoonAxis.new |> step2 |> IO.inspect
+    ycycle = ys |> MoonAxis.new |> step2 |> IO.inspect
+    zcycle = zs |> MoonAxis.new |> step2 |> IO.inspect
+    xcycle |> Util.lcm(ycycle) |> Util.lcm(zcycle)
 
-    step2(moons)
   end
 
 end
