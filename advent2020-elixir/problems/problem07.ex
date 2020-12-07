@@ -15,19 +15,41 @@ defmodule Problem do
   end
 
   def load_row(s) do
-    match = Regex.named_captures(~r/^(?<color>[\w ]+) bags contain (?<contains>.*)\.$/, s)
+    match = Regex.named_captures(~r/^ *(?<color>[\w ]+) bags contain (?<contains>.*)\.$/, s)
     {match["color"], parse_contains(match["contains"])}
   end
 
-  def load(inputstr) do
+  def load_graph(inputstr) do
     inputstr
     |> String.trim
     |> String.split(~r/\n/)
     |> Enum.map(&load_row/1)
+    |> Enum.flat_map(&row_to_edges/1)
   end
 
-  def part1(rows) do
+  def row_to_edges({orig_color, contains_list}) do
+    contains_list 
+    |> Enum.map(fn {amt, contains_color} -> {contains_color, orig_color} end)
+  end
+
+  def p1_traverse(graph, curr) do
+    # "p1_traverse #{curr}" |> IO.puts
+    matching_edges = graph
+    |> Enum.filter(fn {contains, orig} -> curr == contains end)
+    # |> IO.inspect
+    [curr] ++ Enum.map(matching_edges, fn {contains, orig} -> p1_traverse(graph, orig) end)
+  end
+
+  def part1(graph) do
+    # graph |> IO.inspect
     
+    paths = graph
+    |> p1_traverse("shiny gold")
+    |> List.flatten
+    |> MapSet.new
+    |> MapSet.delete("shiny gold")
+    # |> IO.inspect
+    |> Enum.count
   end
 
   def part2(rows) do
@@ -52,7 +74,8 @@ defmodule Tests do
 
     assert {"light red", [{1, "bright white"}, {2, "muted yellow"}]} == "light red bags contain 1 bright white bag, 2 muted yellow bags." |> Problem.load_row
 
-    assert 4 == inputstr |> Problem.load |> Problem.part1
+    g = inputstr |> Problem.load_graph
+    assert 4 == g |> Problem.part1
     
   end
 
