@@ -101,7 +101,7 @@ defmodule Problem do
     step2(axis, 0, MapSet.new |> MapSet.put(axis))
   end
   def step2(axis, step_count, visited) do
-    if step_count > 0 and Integer.mod(step_count, 100) == 0 do
+    if step_count > 0 and Integer.mod(step_count, 1000) == 0 do
       step_count |> IO.inspect
     end
 
@@ -176,7 +176,7 @@ defmodule Tests do
       {9, -8, -3},
     ]
     assert 1940 == rows |> Problem.part1(100)
-    # assert 4686774924 == rows |> Problem.part2
+    assert 4686774924 == rows |> Problem.part2
   end
 
   test "go time" do
@@ -187,6 +187,7 @@ defmodule Tests do
       {4, -4, -3}
     ]
     assert 9999 == rows |> Problem.part1(1000)
+    assert 282399002133976 == rows |> Problem.part2
   end
 
 end
