@@ -26,8 +26,8 @@ defmodule Problem do
     |> Enum.map(&load_row/1)
     |> Enum.flat_map(&row_to_edges/1)
   end
-
   def row_to_edges({orig_color, contains_list}) do
+    # hmm I'm not sure if we needed to invert the graph on the first one
     contains_list 
     |> Enum.map(fn {amt, contains_color} -> {contains_color, orig_color} end)
   end
@@ -52,9 +52,36 @@ defmodule Problem do
     |> Enum.count
   end
 
-  def part2(rows) do
+  def load_graph2(inputstr) do
+    inputstr
+    |> String.trim
+    |> String.split(~r/\n/)
+    |> Enum.map(&load_row/1)
+  end
+
+
+  def p2_traverse(rows, {amt, curr}) do
+    # "p2_traverse #{amt} #{curr}" |> IO.puts
+    matching_rows = rows
+    |> Enum.filter(fn {color, _contains} -> color == curr end)
+    # |> IO.inspect
+    child_count = for {color, contains} <- matching_rows, c <- contains do
+      p2_traverse(rows, c)
+    end
+    |> Enum.sum
+    
+    amt + amt * child_count
 
   end
+
+  def part2(rows) do
+    total_bags = rows
+    |> IO.inspect
+    |> p2_traverse({1, "shiny gold"})
+    
+    total_bags - 1   # subtract the original bag
+  end
+
 
 end
 
@@ -77,6 +104,18 @@ defmodule Tests do
     g = inputstr |> Problem.load_graph
     assert 4 == g |> Problem.part1
     
+  end
+
+  test "another example" do
+    inputstr = "shiny gold bags contain 2 dark red bags.
+    dark red bags contain 2 dark orange bags.
+    dark orange bags contain 2 dark yellow bags.
+    dark yellow bags contain 2 dark green bags.
+    dark green bags contain 2 dark blue bags.
+    dark blue bags contain 2 dark violet bags.
+    dark violet bags contain no other bags."
+    g = inputstr |> Problem.load_graph2
+    assert 126 == g |> Problem.part2
   end
 
   test "go time " do
@@ -677,5 +716,8 @@ defmodule Tests do
 
     g = inputstr |> Problem.load_graph
     assert 121 == g |> Problem.part1
+
+    assert 123 == inputstr |> Problem.load_graph2 |> Problem.part2
+
   end
 end
