@@ -24,8 +24,20 @@ defmodule Problem do
     |> Enum.map(&load_recipe/1)
   end
 
+  def p1_traverse(edges, {amt, chem}) do
+    "p1_traverse #{amt} #{chem}" |> IO.puts
+    [{ingreds, {a, c}}] = edges
+    |> Enum.filter(fn {ingreds, {a, c}} -> c == chem end)
+    |> IO.inspect
+
+      
+
+  end
+
   def part1(rows) do
-    # yikes, this might be a tough one    
+    rows 
+    |> IO.inspect
+    |> p1_traverse({1, "FUEL"})
   end
 
   def part2(rows) do
