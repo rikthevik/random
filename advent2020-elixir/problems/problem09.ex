@@ -45,17 +45,16 @@ defmodule Problem do
   end 
 
   def p2(curr, remaining, sum_target) do
-    # "curr=#{inspect curr} remaining"
     sum = Enum.sum(curr)
     if sum == sum_target do
       curr
     else
       if sum < sum_target do
-        [new|remaining] = remaining  # get the next number from remaining
-        curr = curr ++ [new]           # add it to the end of curr
+        [new|remaining] = remaining      # get the next number from remaining
+        curr = curr ++ [new]             # add it to the end of curr
         p2(curr, remaining, sum_target)
-      else
-        [_|curr] = curr              # remove first element of the curr list
+      else  # sum > sum_target
+        [_|curr] = curr                  # remove first element of the curr list
         p2(curr, remaining, sum_target)
       end
     end
@@ -1100,7 +1099,8 @@ defmodule Tests do
     66841659993773
     56127089639442"
 
-    assert 127 == inputstr |> Problem.load |> Problem.part1(25)
+    assert 1504371145 == inputstr |> Problem.load |> Problem.part1(25)
+    assert 183278487 == inputstr |> Problem.load |> Problem.part2(1504371145)
   end
 
 end
