@@ -37,15 +37,35 @@ defmodule Problem do
     invalid_ints = for i <- preamble_len..(Enum.count(ints)-preamble_len) do
       p1valid?(ints, i, preamble_len)
     end
-    |> IO.inspect
+    # |> IO.inspect
     |> Enum.filter(fn {i, member} -> member == false end)
     
     [{val, false}] = invalid_ints
     val
   end 
 
-  def part2() do
+  def p2(curr, remaining, sum_target) do
+    # "curr=#{inspect curr} remaining"
+    sum = Enum.sum(curr)
+    if sum == sum_target do
+      curr
+    else
+      if sum < sum_target do
+        [new|remaining] = remaining  # get the next number from remaining
+        curr = curr ++ [new]           # add it to the end of curr
+        p2(curr, remaining, sum_target)
+      else
+        [_|curr] = curr              # remove first element of the curr list
+        p2(curr, remaining, sum_target)
+      end
+    end
+  end
 
+  def part2(ints, sum_target) do
+    [curr|remaining] = ints
+    contiguous = p2([curr], remaining, sum_target)
+    {min, max} = Enum.min_max(contiguous)
+    min + max
   end
 
 end
@@ -75,6 +95,7 @@ defmodule Tests do
     309
     576"
     assert 127 == inputstr |> Problem.load |> Problem.part1(5)
+    assert 62 == inputstr |> Problem.load |> Problem.part2(127)
   end
 
   test "go time" do
