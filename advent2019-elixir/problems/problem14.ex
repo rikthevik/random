@@ -66,6 +66,11 @@ defmodule Problem do
     end
   end
 
+  def ore_required(recipes, nodes, fuel_required) do 
+    p1_traverse(recipes, nodes, %{"FUEL" => fuel_required})
+    |> Map.get("ORE")
+  end
+
   def p1_traverse(_recipes, [], reqs) do reqs end
   def p1_traverse(recipes, [node|nodes], reqs) do
     # "NODE #{node} REQS #{inspect reqs}" |> IO.puts
@@ -81,14 +86,29 @@ defmodule Problem do
     |> recipes_to_edges
     |> Util.topological_sort
   
-    p1_traverse(recipes, nodes, %{"FUEL" => 1})
-    |> Map.get("ORE")
+    ore_required(recipes, nodes, 1)
   
   end
 
-  # def part2(rows) do
+  def part2(recipes) do
+    one_trillion = 1_000_000_000_000
     
-  # end
+    nodes = recipes
+    |> recipes_to_edges
+    |> Util.topological_sort
+  
+    # There are going to be remainders every time
+    # Let's try something dumb.  Take the amount of ore for one fuel, 
+    #  then start counting up from there until we break one trillion
+    ore_count = ore_required(recipes, nodes, 1)
+    |> IO.inspect
+
+    fuel_count = Kernel.floor(one_trillion / ore_count)
+    ore_required(recipes, nodes, fuel_count)
+    |> IO.inspect
+
+  end
+
 
 end
 
@@ -130,6 +150,7 @@ defmodule Tests do
     3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT"
     |> Problem.load
     assert 13312 == rows |> Problem.part1
+    assert 82892753 == Problem.part2(rows)
   end
 
   test "example 4" do
@@ -147,6 +168,7 @@ defmodule Tests do
     176 ORE => 6 VJHF"
     |> Problem.load
     assert 180697 == rows |> Problem.part1
+    assert 5586022 == Problem.part2(rows)
   end
 
   test "example 5" do
@@ -169,6 +191,7 @@ defmodule Tests do
     5 BHXH, 4 VRPVC => 5 LTCX"
     |> Problem.load
     assert 2210736 == rows |> Problem.part1
+    assert 460664 == Problem.part2(rows)
   end
 
   test "go time" do
