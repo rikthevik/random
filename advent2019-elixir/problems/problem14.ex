@@ -59,6 +59,7 @@ defmodule Problem do
     # # let's start with 1 match for now, maybe we have to pick the minimum recipe
     [{produced, {recipe_amt, _req_chem}}] = matching_recipes
 
+    # There's a remainder here...
     recipe_iterations = Kernel.ceil(req_amt / recipe_amt)
 
     for {prod_amt, prod_chem} <- produced, into: %{} do
@@ -100,13 +101,25 @@ defmodule Problem do
     # There are going to be remainders every time
     # Let's try something dumb.  Take the amount of ore for one fuel, 
     #  then start counting up from there until we break one trillion
+    #  then let's start counting down until we're below one trillion
+    # Wow am I tired...
     ore_count = ore_required(recipes, nodes, 1)
-    |> IO.inspect
 
+    # Count up in 10000s
     fuel_count = Kernel.floor(one_trillion / ore_count)
-    ore_required(recipes, nodes, fuel_count)
-    |> IO.inspect
+    {fc_after, ore} = 1..one_trillion  # a big number at any rate
+    |> Stream.map(fn i -> {fuel_count+i*10000, ore_required(recipes, nodes, fuel_count+i*10000)} end)
+    |> Stream.drop_while(fn {fc, ore} -> ore <= one_trillion end)
+    |> Enum.at(0)
 
+    # Count down in 1s
+    {fc, ore} = 1..10000  # a big number at any rate
+    |> Stream.map(fn i -> {fc_after-i, ore_required(recipes, nodes, fc_after-i)} end)
+    |> Stream.drop_while(fn {fc, ore} -> ore > one_trillion end)
+    |> Enum.at(0)
+    
+    # And there we go
+    fc
   end
 
 
@@ -251,6 +264,7 @@ defmodule Tests do
     18 QNWRZ, 7 RLFSK => 1 WZLFV"
     |> Problem.load
     assert 387001 == rows |> Problem.part1
+    assert 3412429 == Problem.part2(rows)
   end
 
 end
