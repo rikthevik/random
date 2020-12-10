@@ -24,13 +24,25 @@ defmodule Problem do
     |> Enum.map(&load_recipe/1)
   end
 
-  def p1_traverse(edges, {amt, chem}) do
-    "p1_traverse #{amt} #{chem}" |> IO.puts
-    [{ingreds, {a, c}}] = edges
-    |> Enum.filter(fn {ingreds, {a, c}} -> c == chem end)
+  def p1_traverse(recipes, {req_amt, "ORE"}) do
+    "ORE => #{req_amt}" |> IO.puts
+    req_amt
+  end
+  def p1_traverse(recipes, {req_amt, req_chem}) do
+    "p1_traverse #{req_amt} #{req_chem}" |> IO.puts
+    matching_recipes = recipes
+    |> Enum.filter(fn {ingreds, {a, c}} -> c == req_chem end)
     |> IO.inspect
+    "" |> IO.puts
 
-      
+    # # let's start with 1 match for now, maybe we have to pick the minimum recipe
+    [{produced, {prod_amt, req_chem}}] = matching_recipes
+    for {prod_amt, prod_chem} <- produced do
+      # gotta incorporate the required amount here...
+      recipe_iterations = Kernel.ceil(req_amt / prod_amt)
+      p1_traverse(recipes, {prod_amt * recipe_iterations, prod_chem})
+    end
+    |> Enum.sum
 
   end
 
