@@ -20,11 +20,11 @@ defmodule Problem do
   end
 
   def part1(ints) do
+    ints = [0] ++ Enum.sort(ints) ++ [Enum.max(ints)+3]
     diffs = ints
     |> Enum.slice(0, Enum.count(ints)-1)
     |> Enum.zip(Enum.slice(ints, 1, Enum.count(ints)-1))
     |> Enum.map(fn {a, b} -> b-a end)
-    |> IO.inspect
 
     ones = Enum.filter(diffs, fn d -> d == 1 end) |> Enum.count
     threes = Enum.filter(diffs, fn d -> d == 3 end) |> Enum.count
@@ -32,31 +32,60 @@ defmodule Problem do
   end 
 
   def part2(ints) do
-    ints = [0] ++ Enum.sort(ints) ++ [Enum.max(ints)+3]
+    ints = Enum.sort(ints)
+    |> IO.inspect
     # i think we can memoize and reuse a bunch of previous work
 
-    intmap = Enum.zip(0..Enum.count(ints), ints)
-    memo = Map.new
-    traverse(intmap, 0, memo)
+    intmap = Enum.zip(0..Enum.count(ints), ints) |> Map.new
+    traverse(intmap, 0, 1)
     |> IO.inspect
   end
 
   def traverse(intmap, idx, memo) do
-    if Map.has_key?(memo, idx) do
-      memo
+    # if we've seen it before, return it
+    # if we haven't seen it, 
+    #  figure out the paths from this point
+    #  set the result in the memo
+
+    for i <- 0..memo do IO.write(" ") end
+    "F(#{idx})" |> IO.puts
+
+    if false do # Map.has_key?(memo, idx) do
+      "memo(#{idx}) => #{memo[idx]}" |> IO.puts 
+      Map.get(memo, idx)
     else
       val = Map.get(intmap, idx)
 
-      newmemo = (idx+1)..(idx+3)
-      |> Enum.reduce(memo, fn (i, memo) ->
-        otherval = Map.get(intmap, idx+i, -99)
+      result = 1..3
+      |> Enum.map(fn (i) ->
+        otherval = Map.get(intmap, idx+i, -9999)
         diff = otherval - val
+        for i <- 0..memo do IO.write(" ") end
+        "val=#{val} other=#{otherval} diff=#{diff}" |> IO.puts
         if 1 <= diff and diff <= 3 do
-          memo |> Map.update(traverse(intmap, idx+i, memo))
+          traverse(intmap, idx+i, memo+1)
         else
-          memo
+          0
         end
-      end)
+      end)      
+      |> Enum.sum
+      result = if result == 0, do: 1, else: result
+      
+
+      # |> Enum.reduce(memo, fn (i, memo) ->
+      #   otherval = Map.get(intmap, idx+i, -9999)
+      #   diff = otherval - val
+      #   "val=#{val} other=#{otherval} diff=#{diff}" |> IO.puts
+      #   if 1 <= diff and diff <= 3 do
+      #     memo |> Map.merge(traverse(intmap, idx+i, memo))
+      #   else
+      #     memo
+      #   end
+      # end)
+      
+      for i <- 0..memo do IO.write(" ") end
+      "F(#{idx}):#{val} = #{result}" |> IO.puts
+      result
     end
   end
 end
@@ -113,6 +142,7 @@ defmodule Tests do
     10
     3"
     assert 220 == inputstr |> Problem.load |> Problem.part1
+    assert 19208 == inputstr |> Problem.load |> Problem.part2
   end
 
   test "go time" do
