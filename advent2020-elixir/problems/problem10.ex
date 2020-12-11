@@ -32,7 +32,7 @@ defmodule Problem do
   end 
 
   def part2(ints) do
-    ints = Enum.sort(ints)
+    ints = [0] ++ Enum.sort(ints) ++ [Enum.max(ints)+3]
     |> IO.inspect
     # i think we can memoize and reuse a bunch of previous work
 
@@ -47,7 +47,7 @@ defmodule Problem do
     #  figure out the paths from this point
     #  set the result in the memo
 
-    for i <- 0..memo do IO.write(" ") end
+    for _ <- 0..memo do IO.write(" ") end
     "F(#{idx})" |> IO.puts
 
     if false do # Map.has_key?(memo, idx) do
@@ -60,7 +60,7 @@ defmodule Problem do
       |> Enum.map(fn (i) ->
         otherval = Map.get(intmap, idx+i, -9999)
         diff = otherval - val
-        for i <- 0..memo do IO.write(" ") end
+        for _ <- 0..memo do IO.write(" ") end
         "val=#{val} other=#{otherval} diff=#{diff}" |> IO.puts
         if 1 <= diff and diff <= 3 do
           traverse(intmap, idx+i, memo+1)
@@ -83,7 +83,7 @@ defmodule Problem do
       #   end
       # end)
       
-      for i <- 0..memo do IO.write(" ") end
+      for _ <- 0..memo do IO.write(" ") end
       "F(#{idx}):#{val} = #{result}" |> IO.puts
       result
     end
@@ -93,6 +93,7 @@ end
 defmodule Tests do 
   use ExUnit.Case
   
+  @tag :simple
   test "examples" do
     inputstr = "16
     10
