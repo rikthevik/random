@@ -7,6 +7,25 @@ defmodule Util do
   end
 end
 
+# stolen from
+#  https://elixir-lang.org/getting-started/processes.html#state
+defmodule KV do
+  def start_link do
+    Task.start_link(fn -> loop(%{}) end)
+  end
+
+  defp loop(map) do
+    receive do
+      {:get, key, caller} ->
+        send caller, Map.get(map, key)
+        loop(map)
+      {:put, key, value} ->
+        # "SET F(#{key})=#{value}" |> IO.puts
+        loop(Map.put(map, key, value))
+    end
+  end
+end
+
 defmodule Problem do
 
   def load_line(line) do
@@ -36,55 +55,50 @@ defmodule Problem do
     |> IO.inspect
     # i think we can memoize and reuse a bunch of previous work
 
+    {:ok, pid} = KV.start_link
+    Process.register(pid, :memo)
+
     intmap = Enum.zip(0..Enum.count(ints), ints) |> Map.new
-    traverse(intmap, 0, 1)
+    traverse(intmap, 0)
     |> IO.inspect
+    
   end
 
-  def traverse(intmap, idx, memo) do
+  def traverse(intmap, idx) do
     # if we've seen it before, return it
     # if we haven't seen it, 
     #  figure out the paths from this point
     #  set the result in the memo
 
-    for _ <- 0..memo do IO.write(" ") end
-    "F(#{idx})" |> IO.puts
+    # for _ <- 0..memo do IO.write(" ") end
+    # "F(#{idx})" |> IO.puts
 
-    if false do # Map.has_key?(memo, idx) do
-      "memo(#{idx}) => #{memo[idx]}" |> IO.puts 
-      Map.get(memo, idx)
+    send :memo, {:get, idx, self()}
+    received = receive do v -> v end
+
+    if received != nil do
+      # "memo(#{idx}) => #{received}" |> IO.puts 
+      received
     else
       val = Map.get(intmap, idx)
 
-      result = 1..3
-      |> Enum.map(fn (i) ->
-        otherval = Map.get(intmap, idx+i, -9999)
-        diff = otherval - val
-        for _ <- 0..memo do IO.write(" ") end
-        "val=#{val} other=#{otherval} diff=#{diff}" |> IO.puts
-        if 1 <= diff and diff <= 3 do
-          traverse(intmap, idx+i, memo+1)
-        else
-          0
-        end
-      end)      
+      idx_to_traverse = 1..3
+      |> Enum.filter(fn (i) ->
+        diff = Map.get(intmap, idx+i, -9999) - val
+        1 <= diff and diff <= 3
+      end)
+  
+      result = idx_to_traverse
+      |> Enum.map(fn i ->
+        traverse(intmap, idx+i)
+      end)
       |> Enum.sum
+      
       result = if result == 0, do: 1, else: result
-      
 
-      # |> Enum.reduce(memo, fn (i, memo) ->
-      #   otherval = Map.get(intmap, idx+i, -9999)
-      #   diff = otherval - val
-      #   "val=#{val} other=#{otherval} diff=#{diff}" |> IO.puts
-      #   if 1 <= diff and diff <= 3 do
-      #     memo |> Map.merge(traverse(intmap, idx+i, memo))
-      #   else
-      #     memo
-      #   end
-      # end)
-      
-      for _ <- 0..memo do IO.write(" ") end
-      "F(#{idx}):#{val} = #{result}" |> IO.puts
+      # "set f(#{idx})=#{result}" |> IO.puts
+      send :memo, {:put, idx, result}
+
       result
     end
   end
@@ -255,7 +269,7 @@ defmodule Tests do
     53
     3"
     assert 2516 == inputstr |> Problem.load |> Problem.part1
-    
+    assert 19208 == inputstr |> Problem.load |> Problem.part2    
   end
 
 end
