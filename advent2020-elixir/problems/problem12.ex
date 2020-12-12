@@ -38,7 +38,7 @@ defmodule Problem do
   def process_rows(prob, []) do prob end
   def process_rows(prob, [inst|rows]) do
     newprob = instruction(prob, inst)
-    |> IO.inspect
+    # |> IO.inspect
     process_rows(newprob, rows)
   end
 
@@ -49,28 +49,119 @@ defmodule Problem do
     Kernel.abs(prob2.x) + Kernel.abs(prob2.y)
 
   end
+end
 
 
+defmodule Problem2 do
+  defstruct [:sx, :sy, :wx, :wy]
 
-
-  def part2(rows) do
-  
+  def instruction(prob, {"N", c}) do %{prob| wy: prob.wy+c} end
+  def instruction(prob, {"S", c}) do %{prob| wy: prob.wy-c} end
+  def instruction(prob, {"E", c}) do %{prob| wx: prob.wx+c} end
+  def instruction(prob, {"W", c}) do %{prob| wx: prob.wx-c} end
+  def instruction(prob, {"L", angle}) do rotate_waypoint(prob, angle) end
+  def instruction(prob, {"R", angle}) do rotate_waypoint(prob, -angle) end
+  def instruction(prob, {"F", c}) do
+    %{prob|
+      sx: prob.sx + prob.wx * c,
+      sy: prob.sy + prob.wy * c,
+    }
   end
 
-  
+  def clamp(deg) when deg < 0 do clamp(deg+360) end
+  def clamp(deg) when deg >= 360 do Integer.mod(deg, 360) end
+  def clamp(deg) do deg end
+
+  def cos(deg) do cos2(clamp(deg)) end
+  def cos2(0) do 1 end
+  def cos2(90) do 0 end
+  def cos2(180) do -1 end
+  def cos2(270) do 0 end
+
+  def sin(deg) do sin2(clamp(deg)) end
+  def sin2(0) do 0 end
+  def sin2(90) do 1 end
+  def sin2(180) do 0 end
+  def sin2(270) do -1 end
+
+  def rotate_waypoint(prob, deg) do
+    newx = prob.wx * cos(deg) - prob.wy * sin(deg)
+    newy = prob.wx * sin(deg) - prob.wy * cos(deg)
+    # "rotate #{prob.wx} #{prob.wy} : #{deg} => #{newx} #{newy}" |> IO.inspect
+    %{prob|
+      wx: newx,
+      wy: newy
+    }
+  end
+
+  def process_rows(prob, []) do prob end
+  def process_rows(prob, [inst|rows]) do
+    newprob = instruction(prob, inst)
+    # |> IO.inspect
+    process_rows(newprob, rows)
+  end
+
+  def part2(rows) do
+    prob = %Problem2{sx: 0, sy: 0, wx: 10, wy: 1}
+    prob2 = process_rows(prob, rows)
+    Kernel.abs(prob2.sx) + Kernel.abs(prob2.sy)
+  end
 end
+
 
 defmodule Tests do 
   use ExUnit.Case
   
+  test "functions" do
+    assert -1 == Problem2.sin(-90)
+    assert 0 == Problem2.sin(-180)
+    assert +1 == Problem2.sin(-270)
+    assert 0 == Problem2.sin(-360)
+    assert 0 == Problem2.sin(0)
+    assert +1 == Problem2.sin(90)
+    assert 0 == Problem2.sin(180)
+    assert -1 == Problem2.sin(270)
+    assert 0 == Problem2.sin(360)
+    assert +1 == Problem2.sin(450)
+    assert -1 == Problem2.sin(-90)
+    assert 0 == Problem2.sin(-180)
+
+    assert 0 == Problem2.cos(-90)
+    assert -1 == Problem2.cos(-180)
+    assert 0 == Problem2.cos(-270)
+    assert +1 == Problem2.cos(-360)
+    assert +1 == Problem2.cos(0)
+    assert 0 == Problem2.cos(90)
+    assert -1 == Problem2.cos(180)
+    assert 0 == Problem2.cos(270)
+    assert +1 == Problem2.cos(360)
+    assert 0 == Problem2.cos(450)
+  end
+
   test "examples" do
     inputstr = "F10
     N3
+    N1
+    S1
+    E1
+    W1
+    R90
+    R90
+    R90
+    R90
+    L90
+    L90
+    L90
+    L90
     F7
     R90
+    L90
+    R90
+    L270
+    R270
     F11"
     assert 25 == inputstr |> Problem.load |> Problem.part1
-    # assert 26 == inputstr |> Problem.load |> Problem.part2
+    assert 286 == inputstr |> Problem.load |> Problem2.part2
   end
 
   test "go time" do
@@ -843,7 +934,7 @@ defmodule Tests do
     S4
     F93"
     assert 759 == inputstr |> Problem.load |> Problem.part1
-    # assert 8 == inputstr |> Problem.load |> Problem.part2
+    assert 8 == inputstr |> Problem.load |> Problem2.part2
   end
 
 
