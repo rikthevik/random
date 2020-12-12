@@ -59,8 +59,8 @@ defmodule Problem2 do
   def instruction(prob, {"S", c}) do %{prob| wy: prob.wy-c} end
   def instruction(prob, {"E", c}) do %{prob| wx: prob.wx+c} end
   def instruction(prob, {"W", c}) do %{prob| wx: prob.wx-c} end
-  def instruction(prob, {"L", angle}) do rotate_waypoint(prob, angle) end
-  def instruction(prob, {"R", angle}) do rotate_waypoint(prob, -angle) end
+  def instruction(prob, {"L", deg}) do rotate_waypoint(prob, deg) end
+  def instruction(prob, {"R", deg}) do rotate_waypoint(prob, -deg) end
   def instruction(prob, {"F", c}) do
     %{prob|
       sx: prob.sx + prob.wx * c,
@@ -86,7 +86,7 @@ defmodule Problem2 do
 
   def rotate_waypoint(prob, deg) do
     newx = prob.wx * cos(deg) - prob.wy * sin(deg)
-    newy = prob.wx * sin(deg) - prob.wy * cos(deg)
+    newy = prob.wx * sin(deg) + prob.wy * cos(deg)
     # "rotate #{prob.wx} #{prob.wy} : #{deg} => #{newx} #{newy}" |> IO.inspect
     %{prob|
       wx: newx,
@@ -112,6 +112,9 @@ end
 defmodule Tests do 
   use ExUnit.Case
   
+  def get_waypoint(p) do {p.wx, p.wy} end
+
+  @tag :functions
   test "functions" do
     assert -1 == Problem2.sin(-90)
     assert 0 == Problem2.sin(-180)
@@ -136,6 +139,12 @@ defmodule Tests do
     assert 0 == Problem2.cos(270)
     assert +1 == Problem2.cos(360)
     assert 0 == Problem2.cos(450)
+
+    p = %{wx: 2, wy: 1}
+    assert {-1, 2} == Problem2.rotate_waypoint(p, 90) |> get_waypoint
+    assert {-2, -1} == Problem2.rotate_waypoint(p, 180) |> get_waypoint
+    assert {1, -2} == Problem2.rotate_waypoint(p, 270) |> get_waypoint
+    assert {2, 1} == Problem2.rotate_waypoint(p, 360) |> get_waypoint
   end
 
   test "examples" do
@@ -934,7 +943,7 @@ defmodule Tests do
     S4
     F93"
     assert 759 == inputstr |> Problem.load |> Problem.part1
-    assert 8 == inputstr |> Problem.load |> Problem2.part2
+    assert 45763 == inputstr |> Problem.load |> Problem2.part2
   end
 
 
