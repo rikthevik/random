@@ -69,6 +69,7 @@ defmodule Problem do
   end
 
   def go(buses_and_offsets, i) do
+    IO.inspect(i)
     if okay(buses_and_offsets, i) do
       i
     else
