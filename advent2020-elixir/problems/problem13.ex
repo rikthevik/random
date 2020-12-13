@@ -63,13 +63,24 @@ defmodule Problem do
 
   def okay(buses_and_offsets, i) do
     for {bus, offset} <- buses_and_offsets do
-      offset == bus - Integer.mod(i, bus)
+      remainder = Integer.mod(bus - Integer.mod(i, bus), bus)
+      offset == remainder
     end
     |> Enum.all?
+
+    # if i == 3417 do
+    #   for {bus, offset} <- buses_and_offsets do    
+    #     remainder = bus - Integer.mod(i, bus)
+    #     "bus=#{bus} offset=#{offset} rem=#{remainder}" |> IO.inspect
+    #     offset == remainder or remainder == bus
+    #   end
+    #   |> IO.inspect
+    #   1 = 0
+    # end
   end
 
   def go(buses_and_offsets, i) do
-    IO.inspect(i)
+    # IO.inspect(i)
     if okay(buses_and_offsets, i) do
       i
     else
@@ -93,7 +104,14 @@ defmodule Tests do
     assert 3417 == inputstr |> Problem.load2 |> Problem.part2
 
     inputstr = "7,13,x,x,59,x,31,19"
-    # assert 1068781 == inputstr |> Problem.load2 |> Problem.part2
+    assert 1068781 == inputstr |> Problem.load2 |> Problem.part2
+
+    assert Problem.part2(Problem.load2("67,7,59,61")) == 754018
+    assert Problem.part2(Problem.load2("67,x,7,59,61")) == 779210
+    assert Problem.part2(Problem.load2("67,7,x,59,61")) == 1261476
+    assert Problem.part2(Problem.load2("1789,37,47,1889")) == 1202161486
+
+
   end
 
   test "go time" do
