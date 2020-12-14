@@ -33,7 +33,6 @@ defmodule Problem do
     
     p = p 
     |> process_rows(rows)
-    |> IO.inspect
 
     p.mem
     |> Enum.map(fn {_addr, val} -> val end)
@@ -46,9 +45,7 @@ defmodule Problem do
     # we want a bitmask to set a bit, and a bitmask to unset a bit
     setmask = maskstr |> String.replace(~r/[^1]/, "0") |> String.to_integer(2)
     unsetmask = maskstr |> String.replace(~r/[^0]/, "1") |> String.to_integer(2)
-
-    "setmask=#{setmask} unsetmask=#{unsetmask}" |> IO.inspect
-
+    # "setmask=#{setmask} unsetmask=#{unsetmask}" |> IO.inspect
     (val ||| setmask) &&& unsetmask
   end
 
@@ -62,20 +59,103 @@ defmodule Problem do
     |> process_rows(rows)
   end
 
+  def part1(rows) do
+    p = %Problem{
+      mask: nil,
+      mem: Map.new  # indexed by memory addr
+    }
+    
+    p = p 
+    |> process_rows(rows)
+    |> IO.inspect
+
+    p.mem
+    |> Enum.map(fn {_addr, val} -> val end)
+    |> Enum.sum
+
+  end
+  
+  ##############################
+
+  def part2(rows) do
+    p = %Problem{
+      mask: nil,
+      mem: Map.new  # indexed by memory addr
+    }
+    
+    p = p 
+    |> process_rows2(rows)
+    |> IO.inspect
+
+    p.mem
+    |> Enum.map(fn {_addr, val} -> val end)
+    |> Enum.sum
+
+  end
+  
+  def process_rows2(p, []) do p end
+  def process_rows2(p, [{:mask, mask}|rows]) do 
+    %{p| mask: mask}
+    |> process_rows2(rows)
+  end
+  def process_rows2(p, [{:set, addr, val}|rows]) do
+    newly_set = addrs_for(p.mask, addr)
+    |> Enum.map(fn addr -> {addr, val} end)
+    |> Map.new
+
+    %{p| mem: p.mem |> Map.merge(newly_set)}
+    |> process_rows2(rows)
+  end
+
+  def apply_mask_bit({"0", b}) do b end
+  def apply_mask_bit({"1", _}) do "1" end
+  def apply_mask_bit({"X", _}) do "X" end
+
+  def float_tree(resultstr) do float_tree(resultstr, "") end
+  def float_tree([], acc) do acc end
+  def float_tree([c|rest], acc) 
+    when c == "0" or c == "1" do 
+    float_tree(rest, acc <> c)
+  end
+  def float_tree(["X"|rest], acc) do [
+    [float_tree(rest, acc <> "0")],
+    [float_tree(rest, acc <> "1")]
+  ] end
+
+  def addrs_for(maskstr, addr) do
+    addrstr = addr |> Integer.to_string(2) |> String.pad_leading(String.length(maskstr), "0")
+    resultstr = Enum.zip(String.graphemes(maskstr), String.graphemes(addrstr))
+    |> Enum.map(&apply_mask_bit/1)
+
+    floattree = resultstr
+    |> float_tree
+    |> List.flatten
+    |> IO.inspect
+    |> Enum.map(fn s -> String.to_integer(s, 2) end)
+    |> IO.inspect
+  end
+
 end
 
 
 
 defmodule Tests do 
   use ExUnit.Case
-  
+
+  test "functions" do
+    mask = "00X1001X"
+    assert [26, 27, 58, 59] = Problem.addrs_for(mask, 42)
+  end
+
   test "example" do
     inputstr = "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
     mem[8] = 11
     mem[7] = 101
     mem[8] = 0"
     assert 165 == inputstr |> Problem.load |> Problem.part1
+  end
 
+  test "custom simple case" do
     inputstr = "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX10X
     mem[0] = 0
     mem[1] = 1
@@ -94,7 +174,14 @@ defmodule Tests do
     mem[14] = 14
     mem[15] = 15"
     assert 136 == inputstr |> Problem.load |> Problem.part1
+  end
 
+  test "example2" do
+    inputstr = "mask = 000000000000000000000000000000X1001X
+    mem[42] = 100
+    mask = 00000000000000000000000000000000X0XX
+    mem[26] = 1"
+    assert 208 == inputstr |> Problem.load |> Problem.part2
   end
 
   test "go time" do
@@ -641,7 +728,7 @@ defmodule Tests do
     mem[43617] = 84114
     mem[37229] = 58103"
     assert 4886706177792 == inputstr |> Problem.load |> Problem.part1
-    
+    assert 208 == inputstr |> Problem.load |> Problem.part2    
   end
   
 
