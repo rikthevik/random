@@ -49,42 +49,51 @@ defmodule Problem do
   end
 
   def part2(buses) do
-    buses |> IO.inspect
+    # first_bus = Enum.at(buses, 0)
 
-    buses_and_offsets = Enum.zip(buses, 0..Enum.count(buses))
-    |> Enum.filter(fn {b, o} -> b != nil end)
+    buses_and_rems = Enum.zip(buses, 0..Enum.count(buses))
+    |> Enum.filter(fn {b, _} -> b != nil end)
+    |> Enum.map(fn {b, i} -> {b, Integer.mod(b - i, b)} end)
+    |> Enum.sort
+    |> Enum.reverse
     |> IO.inspect
 
-    # Not sure if this needs to be super efficient.
-    # So let's try something real simple.
+    {max_bus, max_rem} = buses_and_rems
+    |> Enum.max
 
-    go(buses_and_offsets, 1)
+    # trying to be sneaky
+    # if max_rem == 937 do
+    #   max_rem = 100000000000000 - 456
+    # end
+
+    go(buses_and_rems, max_rem, max_bus)
   end
 
-  def okay(buses_and_offsets, i) do
-    for {bus, offset} <- buses_and_offsets do
-      remainder = Integer.mod(bus - Integer.mod(i, bus), bus)
-      offset == remainder
-    end
+  def okay(buses_and_rems, t) do
+    buses_and_rems 
+    |> Stream.map(fn {bus, rem} ->
+      rem == Integer.mod(t, bus)
+    end)
     |> Enum.all?
-
-    # if i == 3417 do
-    #   for {bus, offset} <- buses_and_offsets do    
-    #     remainder = bus - Integer.mod(i, bus)
-    #     "bus=#{bus} offset=#{offset} rem=#{remainder}" |> IO.inspect
-    #     offset == remainder or remainder == bus
+    
+    # if t == 3417 do
+    #   for {bus, rem} <- buses_and_rems do    
+    #     remainder = Integer.mod(t, bus)
+    #     "bus=#{bus} rem=#{rem} remainder=#{remainder}" |> IO.inspect
+    #     rem == remainder
     #   end
     #   |> IO.inspect
     #   1 = 0
     # end
   end
 
-  def go(buses_and_offsets, i) do
-    # IO.inspect(i)
-    if okay(buses_and_offsets, i) do
-      i
+  def go(buses_and_rems, t, step) do
+    # "go t=#{t} step=#{step}" |> IO.inspect
+    if okay(buses_and_rems, t) do
+      t
     else
-      go(buses_and_offsets, i+1)
+      # t
+      go(buses_and_rems, t+step, step)
     end
   end
 
@@ -105,20 +114,18 @@ defmodule Tests do
 
     inputstr = "7,13,x,x,59,x,31,19"
     assert 1068781 == inputstr |> Problem.load2 |> Problem.part2
-
     assert Problem.part2(Problem.load2("67,7,59,61")) == 754018
     assert Problem.part2(Problem.load2("67,x,7,59,61")) == 779210
     assert Problem.part2(Problem.load2("67,7,x,59,61")) == 1261476
     assert Problem.part2(Problem.load2("1789,37,47,1889")) == 1202161486
-
-
   end
 
   test "go time" do
     inputstr = "1007125
     13,x,x,41,x,x,x,x,x,x,x,x,x,569,x,29,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,19,x,x,x,23,x,x,x,x,x,x,x,937,x,x,x,x,x,37,x,x,x,x,x,x,x,x,x,x,17"
     assert 2845 == inputstr |> Problem.load |> Problem.part1
-    # assert 286 == inputstr |> Problem.load |> Problem2.part2
+    inputstr = "13,x,x,41,x,x,x,x,x,x,x,x,x,569,x,29,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,19,x,x,x,23,x,x,x,x,x,x,x,937,x,x,x,x,x,37,x,x,x,x,x,x,x,x,x,x,17"
+    assert 286 == inputstr |> Problem.load2 |> Problem.part2
   end
   
 
