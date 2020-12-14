@@ -16,7 +16,7 @@ defmodule Problem do
   end
 
   def load(inputstr) do
-    [tstr, busstrs] = inputstr 
+    inputstr
     |> String.split("\n")
     |> Enum.map(&String.trim/1)
     |> Enum.map(&load_line/1)

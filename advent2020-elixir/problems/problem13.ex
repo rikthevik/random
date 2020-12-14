@@ -51,6 +51,16 @@ defmodule Problem do
   def part2(buses) do
     # first_bus = Enum.at(buses, 0)
 
+    variables = "abcdfghlmnop" |> String.graphemes
+
+    buses = Enum.filter(buses, fn b -> b != nil end)
+
+    Enum.zip([buses, 0..Enum.count(buses), variables])
+    |> Enum.map(fn {b, i, v} -> "y=#{b}*x_#{i}-#{i}" end)
+    |> Enum.join(", ")
+  end
+
+  def part2actual(buses) do
     buses_and_rems = Enum.zip(buses, 0..Enum.count(buses))
     |> Enum.filter(fn {b, _} -> b != nil end)
     |> Enum.map(fn {b, i} -> {b, Integer.mod(b - i, b)} end)
