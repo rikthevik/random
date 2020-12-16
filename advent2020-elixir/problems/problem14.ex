@@ -118,8 +118,8 @@ defmodule Problem do
     float_tree(rest, acc <> c)
   end
   def float_tree(["X"|rest], acc) do [
-    [float_tree(rest, acc <> "0")],
-    [float_tree(rest, acc <> "1")]
+    float_tree(rest, acc <> "0"),
+    float_tree(rest, acc <> "1")
   ] end
 
   def addrs_for(maskstr, addr) do
