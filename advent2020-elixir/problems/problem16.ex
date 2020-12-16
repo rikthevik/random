@@ -67,23 +67,6 @@ defmodule Problem do
 
 ##########
 
-  def part2_ticket_valid(p, t) do
-    for ti <- t do
-      for f <- p.fields do
-        part1_field_valid(f, ti)
-      end
-      |> Enum.any?
-    end
-    |> Enum.all?
-  end
-
-  def part2_ticket_valid_for_fields(t, fields) do
-    for {ti, f} <- Enum.zip(t, fields) do
-      part1_field_valid(f, ti)
-    end
-    |> Enum.all?
-  end
-
   def part2(p) do
     p |> IO.inspect
 
@@ -92,29 +75,13 @@ defmodule Problem do
     |> Enum.filter(fn t -> part2_ticket_valid(p, t) end)
     |> IO.inspect
 
-    p.fields |> Enum.count |> IO.inspect
-    "POOP1" |> IO.puts
-    p.fields |> Util.permutations |> IO.inspect
-    "POOP2" |> IO.puts
-    1=0
+    traverse(valid_tickets, p.fields)
+  end
 
-    [found_fields] = p.fields
-    |> Util.permutations
-    |> Enum.filter(fn fields ->
-      fields |> IO.inspect
-
-      valid_tickets
-      |> Stream.map(fn t -> part2_ticket_valid_for_fields(t, fields) end)
-      |> Enum.all?
-    end)
-
-    found_fields 
+  def traverse(valid_tickets, [f|fields]) do
+    valid_tickets
+    |> Enum.filter(fn t -> part1_field_valid(t, f) end)
     |> IO.inspect
-    |> Enum.map(fn {f, _, _, _, _} -> f end)
-    |> IO.inspect
-    |> Enum.zip(p.mine)
-    |> Map.new
-
   end
 
 
@@ -430,11 +397,11 @@ defmodule Tests do
     355,845,802,234,472,920,174,62,945,889,715,110,721,900,917,948,866,461,140,787"
     assert 29019 == inputstr |> Problem.load |> Problem.part1
     
-    out = inputstr |> Problem.load |> Problem.part2
-    |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "departure") end)
-    |> Enum.map(fn {_k, v} -> v end)
-    |> Enum.reduce(1, fn a, b -> a * b end)
-    assert out == 123
+    # out = inputstr |> Problem.load |> Problem.part2
+    # |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "departure") end)
+    # |> Enum.map(fn {_k, v} -> v end)
+    # |> Enum.reduce(1, fn a, b -> a * b end)
+    # assert out == 123
   end
 
 end
