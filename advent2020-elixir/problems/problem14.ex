@@ -176,6 +176,7 @@ defmodule Tests do
     assert 136 == inputstr |> Problem.load |> Problem.part1
   end
 
+  @tag :example2
   test "example2" do
     inputstr = "mask = 000000000000000000000000000000X1001X
     mem[42] = 100
@@ -728,7 +729,7 @@ defmodule Tests do
     mem[43617] = 84114
     mem[37229] = 58103"
     assert 4886706177792 == inputstr |> Problem.load |> Problem.part1
-    assert 208 == inputstr |> Problem.load |> Problem.part2    
+    assert 3348493585827 == inputstr |> Problem.load |> Problem.part2    
   end
   
 
