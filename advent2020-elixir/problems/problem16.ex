@@ -2,6 +2,12 @@
 use Bitwise
 
 defmodule Util do
+  # Pulled this from somewhere online.
+  # Considering I'd use itertools in python, I think that's okay.
+  def permutations([]) do [[]] end
+  def permutations(list) do
+    for head <- list, tail <- permutations(list -- [head]), do: [head | tail]
+  end
   
 end
 
@@ -29,7 +35,6 @@ defmodule Problem do
 
     {field_rows, rest} = lines 
     |> Enum.split_while(fn l -> l != "" end)
-    |> IO.inspect
 
     # well that pattern matching sure is effective
     ["", "your ticket:", minestr, "", "nearby tickets:"] ++ ticket_rows = rest
@@ -60,6 +65,59 @@ defmodule Problem do
 
   end
 
+##########
+
+  def part2_ticket_valid(p, t) do
+    for ti <- t do
+      for f <- p.fields do
+        part1_field_valid(f, ti)
+      end
+      |> Enum.any?
+    end
+    |> Enum.all?
+  end
+
+  def part2_ticket_valid_for_fields(t, fields) do
+    for {ti, f} <- Enum.zip(t, fields) do
+      part1_field_valid(f, ti)
+    end
+    |> Enum.all?
+  end
+
+  def part2(p) do
+    p |> IO.inspect
+
+    valid_tickets = p.tickets
+    |> IO.inspect
+    |> Enum.filter(fn t -> part2_ticket_valid(p, t) end)
+    |> IO.inspect
+
+    p.fields |> Enum.count |> IO.inspect
+    "POOP1" |> IO.puts
+    p.fields |> Util.permutations |> IO.inspect
+    "POOP2" |> IO.puts
+    1=0
+
+    [found_fields] = p.fields
+    |> Util.permutations
+    |> Enum.filter(fn fields ->
+      fields |> IO.inspect
+
+      valid_tickets
+      |> Stream.map(fn t -> part2_ticket_valid_for_fields(t, fields) end)
+      |> Enum.all?
+    end)
+
+    found_fields 
+    |> IO.inspect
+    |> Enum.map(fn {f, _, _, _, _} -> f end)
+    |> IO.inspect
+    |> Enum.zip(p.mine)
+    |> Map.new
+
+  end
+
+
 end
 
 
@@ -67,7 +125,7 @@ end
 defmodule Tests do 
   use ExUnit.Case
 
-  test "examples" do
+  test "example1" do
     inputstr = "class: 1-3 or 5-7
     row: 6-11 or 33-44
     seat: 13-40 or 45-50
@@ -80,7 +138,23 @@ defmodule Tests do
     40,4,50
     55,2,20
     38,6,12"
-    assert 71 == inputstr |> Problem.load |> Problem.part1
+    assert 71 == inputstr |> Problem.load |> Problem.part1    
+  end
+
+  @tag :examples
+  test "example2" do
+    inputstr = "class: 0-1 or 4-19
+    row: 0-5 or 8-19
+    seat: 0-13 or 16-19
+    
+    your ticket:
+    11,12,13
+    
+    nearby tickets:
+    3,9,18
+    15,1,5
+    5,14,9"
+    assert %{"class" => 12, "row" => 11, "seat" => 13} == inputstr |> Problem.load |> Problem.part2
   end
 
   test "go time" do
@@ -355,6 +429,12 @@ defmodule Tests do
     597,753,166,563,180,512,68,794,861,510,718,308,525,979,848,862,689,376,565,271
     355,845,802,234,472,920,174,62,945,889,715,110,721,900,917,948,866,461,140,787"
     assert 29019 == inputstr |> Problem.load |> Problem.part1
+    
+    out = inputstr |> Problem.load |> Problem.part2
+    |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "departure") end)
+    |> Enum.map(fn {_k, v} -> v end)
+    |> Enum.reduce(1, fn a, b -> a * b end)
+    assert out == 123
   end
 
 end
