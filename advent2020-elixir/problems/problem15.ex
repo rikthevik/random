@@ -8,6 +8,10 @@ end
 defmodule Problem do
   defstruct [:turn, :mem]
   def new(ints) do
+    # Let's store the last 2 turn positions in a big map.
+    # At least that gives us O(1) access rather than having
+    # to iterate over some big list, and we only store 
+    # what's important.
     %Problem{
       turn: Enum.count(ints)+1,
       mem: ints
@@ -84,7 +88,8 @@ defmodule Tests do
   end
 
   test "part1" do
-    # assert 206 == "7,14,0,17,11,1,2" |> Problem.load |> Problem.part1(2020)
+    assert 206 == "7,14,0,17,11,1,2" |> Problem.load |> Problem.part1(2020)
+    assert 955 == "7,14,0,17,11,1,2" |> Problem.load |> Problem.part1(30000000)
   end
 
 end
