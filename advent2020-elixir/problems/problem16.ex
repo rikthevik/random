@@ -2,11 +2,11 @@
 use Bitwise
 
 defmodule Util do
-  # Pulled this from somewhere online.
-  # Considering I'd use itertools in python, I think that's okay.
-  def permutations([]) do [[]] end
-  def permutations(list) do
-    for head <- list, tail <- permutations(list -- [head]), do: [head | tail]
+  # found online
+  def transpose(rows) do
+    rows
+    |> List.zip
+    |> Enum.map(&Tuple.to_list/1)
   end
   
 end
@@ -67,6 +67,16 @@ defmodule Problem do
 
 ##########
 
+  def part2_ticket_valid(p, t) do
+    for ti <- t do
+      for f <- p.fields do
+        part1_field_valid(f, ti)
+      end
+     |> Enum.any?
+    end
+    |> Enum.all?
+  end
+
   def part2(p) do
     p |> IO.inspect
 
@@ -75,13 +85,42 @@ defmodule Problem do
     |> Enum.filter(fn t -> part2_ticket_valid(p, t) end)
     |> IO.inspect
 
-    traverse(valid_tickets, p.fields)
+    "hello" |> IO.inspect
+
+    ticket_values = Util.transpose(p.tickets)
+    result = traverse(ticket_values, 0, p.fields, [])
+    |> List.flatten
+    |> Enum.map(fn {f, _, _, _, _} -> f end)
+    |> Enum.zip(p.mine)
+    |> Map.new
+    "RESULT #{inspect result}" |> IO.puts
+    result
   end
 
-  def traverse(valid_tickets, [f|fields]) do
-    valid_tickets
-    |> Enum.filter(fn t -> part1_field_valid(t, f) end)
-    |> IO.inspect
+  def traverse(_, _, [], path) do 
+    "final path #{inspect path}" |> IO.puts
+    path
+  end
+  def traverse(ticket_values, idx, fields, path) do
+    
+    vals = Enum.at(ticket_values, idx)
+    "traverse idx=#{idx} vals=#{inspect vals} fields=#{inspect fields} path=#{inspect path}" |> IO.puts
+
+    valid_fields = fields
+    |> Enum.filter(fn f ->
+      vals |> Enum.all?(fn v -> part1_field_valid(f, v) end)
+    end)
+    
+    " valid fields #{inspect valid_fields}" |> IO.puts
+
+    if Enum.count(valid_fields) == 0 do
+      nil
+    else
+      for f <- valid_fields do
+        traverse(ticket_values, idx+1, List.delete(fields, f), path ++ [f])
+      end
+    end
+
   end
 
 
@@ -124,6 +163,7 @@ defmodule Tests do
     assert %{"class" => 12, "row" => 11, "seat" => 13} == inputstr |> Problem.load |> Problem.part2
   end
 
+  @tag :p2
   test "go time" do
     inputstr = "departure location: 42-322 or 347-954
     departure station: 49-533 or 555-966
@@ -397,11 +437,11 @@ defmodule Tests do
     355,845,802,234,472,920,174,62,945,889,715,110,721,900,917,948,866,461,140,787"
     assert 29019 == inputstr |> Problem.load |> Problem.part1
     
-    # out = inputstr |> Problem.load |> Problem.part2
-    # |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "departure") end)
-    # |> Enum.map(fn {_k, v} -> v end)
-    # |> Enum.reduce(1, fn a, b -> a * b end)
-    # assert out == 123
+    out = inputstr |> Problem.load |> Problem.part2
+    |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "departure") end)
+    |> Enum.map(fn {_k, v} -> v end)
+    |> Enum.reduce(1, fn a, b -> a * b end)
+    assert out == 123
   end
 
 end
