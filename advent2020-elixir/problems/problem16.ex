@@ -11,6 +11,28 @@ defmodule Util do
   
 end
 
+# stolen from
+#  https://elixir-lang.org/getting-started/processes.html#state
+defmodule KV do
+  def start_link do
+    Task.start_link(fn -> loop(%{}) end)
+  end
+
+  defp loop(map) do
+    receive do
+      {:get, key, caller} ->
+        retval = Map.get(map, key)
+        # "GET F(#{inspect key}) => #{retval}" |> IO.puts
+        send caller, retval
+        
+        loop(map)
+      {:put, key, value} ->
+        # "SET F(#{inspect key})=#{inspect value}" |> IO.puts
+        loop(Map.put(map, key, value))
+    end
+  end
+end
+
 defmodule Problem do
   defstruct [:fields, :mine, :tickets]
 
@@ -56,13 +78,11 @@ defmodule Problem do
   end
 
   def part1(p) do
-
     p.tickets
     |> List.flatten
     |> Enum.filter(fn val -> not part1_valid(p, val) end)
     |> IO.inspect
     |> Enum.sum
-
   end
 
 ##########
@@ -72,7 +92,7 @@ defmodule Problem do
       for f <- p.fields do
         part1_field_valid(f, ti)
       end
-     |> Enum.any?
+      |> Enum.any?
     end
     |> Enum.all?
   end
@@ -80,49 +100,94 @@ defmodule Problem do
   def part2(p) do
     p |> IO.inspect
 
+    {:ok, pid} = KV.start_link
+    Process.register(pid, :memo)
+
     valid_tickets = p.tickets
-    |> IO.inspect
     |> Enum.filter(fn t -> part2_ticket_valid(p, t) end)
     |> IO.inspect
 
     "hello" |> IO.inspect
 
-    ticket_values = Util.transpose(p.tickets)
-    result = traverse(ticket_values, 0, p.fields, [])
-    |> List.flatten
-    |> Enum.map(fn {f, _, _, _, _} -> f end)
+    ticket_values = valid_tickets
+    |> Util.transpose
+    |> Enum.with_index
+    |> Enum.map(fn {ts, idx} -> {idx, ts} end)
+    |> Map.new
+
+    result = traverse(ticket_values, p.fields)
+    |> Enum.sort
+    |> Enum.map(fn {_idx, name} -> name end)
     |> Enum.zip(p.mine)
     |> Map.new
     "RESULT #{inspect result}" |> IO.puts
     result
   end
 
-  def traverse(_, _, [], path) do 
-    "final path #{inspect path}" |> IO.puts
-    path
+  def part2_field_valid_for_col(f, idx, col) do
+    col |> Enum.all?(fn v -> part1_field_valid(f, v) end)
+    # key = {f, idx}
+    # send :memo, {:get, key, self()}
+    # received = receive do v -> v end
+    # if received == nil do
+    #   received = col |> Enum.all?(fn v -> part1_field_valid(f, v) end)
+    #   send :memo, {:put, key, received}
+    #   received
+    # else
+    #   received
+    # end  
+    # "f=#{inspect f} idx=#{idx} => received=#{inspect received}" |> IO.puts 
+    # received
   end
-  def traverse(ticket_values, idx, fields, path) do
-    
-    vals = Enum.at(ticket_values, idx)
-    "traverse idx=#{idx} vals=#{inspect vals} fields=#{inspect fields} path=#{inspect path}" |> IO.puts
 
-    valid_fields = fields
-    |> Enum.filter(fn f ->
-      vals |> Enum.all?(fn v -> part1_field_valid(f, v) end)
-    end)
-    
-    " valid fields #{inspect valid_fields}" |> IO.puts
+  def traverse2([]) do %{} end
+  def traverse2(field_and_spots) do
+    "traverse2 #{inspect field_and_spots}" |> IO.puts
 
-    if Enum.count(valid_fields) == 0 do
-      nil
-    else
-      for f <- valid_fields do
-        traverse(ticket_values, idx+1, List.delete(fields, f), path ++ [f])
-      end
+    result = field_and_spots
+    |> Enum.min_by(fn {f, spots} -> Enum.count(spots) end)
+
+    {name, [idx]} = result
+
+    new_field_and_spots = field_and_spots
+    |> List.delete(result)
+    |> Enum.map(fn {f, spots} -> {f, List.delete(spots, idx)} end)
+  
+    Map.merge(%{idx => name}, traverse2(new_field_and_spots))
+  end
+
+  def traverse(ticket_values, fields) do
+    
+    for f <- fields do
+      field_spots = ticket_values
+      |> Enum.filter(fn {idx, col} -> part2_field_valid_for_col(f, idx, col) end)
+      |> Enum.map(fn {idx, col} -> idx end)
+      
+      "field=#{inspect f} can be at #{inspect field_spots}" |> IO.puts
+      {name, _, _, _, _} = f
+      {name, field_spots}
     end
+    |> IO.inspect
+    |> traverse2
 
+    # col = Map.get(ticket_values, idx)
+    # "traverse idx=#{idx}" |> IO.puts
+    # # "traverse idx=#{idx} col=#{inspect col} fields=#{inspect fields} path=#{inspect path}" |> IO.puts
+
+
+
+    # valid_fields = fields
+    # |> Enum.filter(fn f -> part2_field_valid_for_vals(f, idx, vals) end)
+    # # " valid fields #{inspect valid_fields}" |> IO.puts
+
+    # if Enum.count(valid_fields) == 0 do
+    #   nil
+    # else
+    #   for f <- valid_fields do
+    #     traverse(ticket_values, idx+1, List.delete(fields, f), [f|path])
+    #   end
+    # end
   end
-
 
 end
 
