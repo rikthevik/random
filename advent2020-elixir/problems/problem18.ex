@@ -67,7 +67,40 @@ defmodule Problem do
     |> Enum.map(fn l -> l |> parse |> eval1 end)
     |> Enum.sum
   end
+
 end
+
+defmodule Attempt2 do
+
+  def eval([token]) do eval(token) end
+  def eval(token) when is_integer(token) do token end
+  def eval(tokens) do
+    "eval tokens=#{inspect tokens}" |> IO.puts
+    # so these would be all of our grammar rules in reverse order of precedence
+    if Enum.member?(tokens, "*") do
+      {left, ["*"|right]} = tokens |> Enum.split_while(&(&1 != "*"))
+      eval(left) * eval(right)
+    else
+      if Enum.member?(tokens, "+") do
+        {left, ["+"|right]} = tokens |> Enum.split_while(&(&1 != "+"))
+        eval(left) + eval(right)
+      else
+        1 = 0
+      end
+    end
+  end
+
+
+  def part2(lines) do
+    lines
+    |> Enum.map(fn l -> l |> Problem.parse |> eval end)
+    |> Enum.sum
+  end
+
+
+end
+
+
 
 defmodule Tests do 
   use ExUnit.Case
@@ -86,6 +119,17 @@ defmodule Tests do
     assert [[1, "+", 2], "*", 3] == "(1 + 2) * 3" |> Problem.parse
     assert 9 == "(1 + 2) * 3" |> Problem.parse |> Problem.eval1
     assert 71 == "1 + 2 * 3 + 4 * 5 + 6" |> Problem.load |> Problem.part1
+  end
+
+  @tag :example2
+  test "example2" do
+    assert 2 == "1 * 2" |> Problem.load |> Attempt2.part2
+    # assert 71 == "1 * 2 + 3 + 4 * 5 + 6" |> Problem.load |> Attempt2.part2
+    assert 51 == "1 + (2 * 3) + (4 * (5 + 6))" |> Problem.load |> Attempt2.part2
+    assert 46 == "2 * 3 + (4 * 5)" |> Problem.load |> Attempt2.part2
+    assert 1445 == "5 + (8 * 3 + 9 + 3 * 4 * 3)" |> Problem.load |> Attempt2.part2
+    assert 669060 == "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))" |> Problem.load |> Attempt2.part2
+    assert 23340 == "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2" |> Problem.load |> Attempt2.part2
   end
 
   test "go time" do
@@ -465,7 +509,8 @@ defmodule Tests do
     5 + (9 + (6 + 6 * 4 * 3 * 6 * 2) + 2) * 5 * 8
     7 * 7 + 7 * (4 + 5 * 9 * (9 * 2 * 4))
     ((4 * 3 * 6) * 5 * 4) * 6 + 3 + 2 * 6"
-    assert 123 == inputstr |> Problem.load |> Problem.part1
+    assert 3885386961962 == inputstr |> Problem.load |> Problem.part1
+    assert 123 == inputstr |> Problem.load |> Attempt2.part2
 
   end
 
