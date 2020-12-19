@@ -10,12 +10,13 @@ def go((himod, hirem), (lomod, lorem)):
     while True:
         #        print val
         if val % lomod == lorem:
-            print "%d * %d iterations + %d == %d" % (himod, iterations, hirem, val)
+            # print "%d * %d iterations + %d == %d" % (himod, iterations, hirem, val)
             return (newmod, val)
-#        if val > newmod:
-#            raise Exception("wtf")
+        if val > newmod:
+            raise Exception("wtf")
         val = val + himod
-        iterations += 1
+        # iterations += 1
+
 
 rows = [
     (67, 0),
@@ -35,7 +36,11 @@ rows = [
     (19, 3),
 ]
 s = "13,x,x,41,x,x,x,x,x,x,x,x,x,569,x,29,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,19,x,x,x,23,x,x,x,x,x,x,x,937,x,x,x,x,x,37,x,x,x,x,x,x,x,x,x,x,17"
-# rows = [ (int(v), i) for i, v in enumerate(s.split(",")) if v != "x" ]
+rows = [ (int(v), i) for i, v in enumerate(s.split(",")) if v != "x" ]
+
+# AHA! In the test data they is 17 with a remainder of 61 which screws everything up.
+# Gotta get that remainder back into the 17's mod space!  Fuckers!
+rows = [ (mod, rem % mod) for (mod, rem) in rows ]
 print rows
 # raise Exception("wat")
 rows = list(sorted(rows, reverse=False))
