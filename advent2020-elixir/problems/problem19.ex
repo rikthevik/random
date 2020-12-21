@@ -105,6 +105,18 @@ defmodule Problem do
     received_messages
     |> Enum.count(fn m -> is_valid?(rulemap, m) end)
   end
+
+  def part2({rulemap, received_messages}) do
+    "8: 42 | 42 8
+    11: 42 31 | 42 11 31"
+    rulemap = rulemap
+    |> Map.merge(%{
+      8 => [[rule: 42], [rule: 42, rule: 8]],
+      11 => [[rule: 42, rule: 31], [rule: 42, rule: 11, rule: 31]],
+    })
+    received_messages
+    |> Enum.count(fn m -> is_valid?(rulemap, m) end)
+  end
 end
 
 
@@ -652,7 +664,8 @@ defmodule Tests do
     aabaaaaaababbabbabaabbbb
     """
     {rulemap, messages} = inputstr |> Problem.load
-    assert 190 == inputstr |> Problem.load |> Problem.part1
+    # assert 190 == inputstr |> Problem.load |> Problem.part1
+    assert 190 == inputstr |> Problem.load |> Problem.part2
   end
   
 end
