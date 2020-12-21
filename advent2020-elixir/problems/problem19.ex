@@ -42,91 +42,60 @@ defmodule Problem do
 
     {rulemap, messages}
   end
-    
+
+
+  def is_valid?(rulemap, s) do
+    is_rule_valid?(rulemap, String.graphemes(s), Map.get(rulemap, 0))
+  end
+  def is_rule_valid?(rulemap, [], []) do true end
+  def is_rule_valid?(rulemap, message, rule_chunks) do 
+    "is_rule_valid? #{message} #{inspect rule_chunks}" |> IO.puts
+    rule_chunks
+    |> Stream.map(fn chunk -> is_chunk_valid?(rulemap, message, chunk) end)
+    |> Enum.any?
+  end
+
+  def is_chunk_valid?(rulemap, [], []) do
+    true
+  end
+  def is_chunk_valid?(rulemap, [c|message], [{:literal, c}|subchunk]) do
+    is_chunk_valid?(rulemap, message, subchunk)
+  end
+  def is_chunk_valid?(rulemap, [c|message], [{:literal, not_c}|subchunk]) do 
+    false
+  end
+  def is_subchunk_valid?(rulemap, [c|message], [{:rule, id}|subchunk]) do
+    is_rule_valid?(rulemap, [c|message], Map.get(rulemap, id)) or is_chunk_valid?(rulemap, message, subchunk)
+  end
+
+  # def is_valid?([m|msg], chunks) do
+  #   chunks = 
+  #   "is_valid #{c}|#{msg} #{ruleidx} #{inspect rule}" |> IO.puts
+  #   for chunk in chunks do
+  #     case chunk do
+  #       [{:literal, rulec}|chunks] -> 
+  #         if c == rulec do
+  #           chunks
+  #           |> Stream.map(fn {:rule, rid} -> is_valid?(msg, rid, rulemap) end)
+  #           |> Enum.all?
+  #         else
+  #           false
+  #         end
+  #       # rest when is_list(rest) ->
+  #       #   # we have a rule, so let's keep the full message and follow it
+  #       #   rest
+  #       #   |> Stream.map(fn {rule: rid} -> is_valid?([c|msg], rid, rulemap) end)
+  #       #   |> Enum.all?
+  #     end
+  #   end
+  #   |> Enum.any?
+  # end
   
-  def is_literal({:literal, _}) do true end
-  def is_literal(_) do false end
-  def all_literals(chunks) do
-    chunks
-    |> List.flatten
-    |> Enum.all?(&is_literal/1)
-  end
-
-  def replace_chunk(chunk, literal_rule) do 
-    # this function can produce a list of new chunks
-    # acc is the replaced list of chunks
-    "REPLACE_CHUNK #{inspect chunk} with #{inspect literal_rule}" |> IO.puts
-    replace_chunk(chunk, literal_rule, [])
-    |> List.flatten
-    |> Enum.map(&Tuple.to_list/1)
-    |> IO.inspect
-    # "^^" |> IO.puts
-  end
-  def replace_chunk([{:rule, num}|chunk], {num, rule_chunks}, acc) do
-    for rule_chunk <- rule_chunks do
-      replace_chunk(chunk, {num, rule_chunks}, [rule_chunk] ++ acc)
-    end
-  end
-  def replace_chunk([], {num, rule_chunks}, acc) do acc |> List.to_tuple end
-  def replace_chunk([subchunk|chunk], {num, rule_chunks}, acc) do
-    [replace_chunk(chunk, {num, rule_chunks}, [subchunk] ++ acc)]
-  end
   
-
-  def expand(rulemap) do
-    literal_rule = rulemap
-    |> Enum.find(fn {_, chunks} -> all_literals(chunks) end)
-
-    "replacing #{inspect literal_rule}" |> IO.puts
-
-    if literal_rule do
-      {literal_num, _} = literal_rule
-
-      newrulemap = for {num, chunks} <- rulemap, into: %{} do
-        new_chunks = for chunk <- chunks do
-          replaced = replace_chunk(chunk, literal_rule)
-          "num=#{num} chunk=#{inspect chunk} replaced=#{inspect replaced}" |> IO.puts
-          replaced
-        end
-        |> Enum.concat
-        |> IO.inspect
-        "@num=#{num} new_chunks=#{inspect new_chunks} \n" |> IO.puts
-        {num, new_chunks}
-      end
-
-      if 1 == Enum.count(newrulemap) do
-        newrulemap
-      else
-        newrulemap
-        |> Map.delete(literal_num)
-        |> IO.inspect
-        |> expand
-      end
-    else
-      rulemap
-    end
-
-  end
-
-  def eval_literal_list(literal_list) do
-    literal_list
-    |> List.flatten
-    |> Enum.map(fn {:literal, c} -> c end)
-    |> Enum.join("")
-  end
-
   def part1({rulemap, received_messages}) do
-    [{0, literal_lists}] = expand(rulemap) |> Map.to_list
-    "###" |> IO.inspect
-    valid_messages = literal_lists
-    |> Enum.map(&eval_literal_list/1)  # not sure if this should need a flatten...
-    |> IO.inspect
-    |> MapSet.new
-
     received_messages
-    |> MapSet.new
-    |> MapSet.difference(valid_messages)
-    |> Enum.count
+    |> Enum.slice(1..1)
+    |> Enum.map(fn m -> is_valid?(rulemap, m) end)
   end
 
 
@@ -137,6 +106,17 @@ end
 
 defmodule Tests do 
   use ExUnit.Case
+
+  @tag :functions
+  test "functions" do
+    inputstr = """
+    0: "a"
+    
+    a
+    """
+    {rulemap, messages} = inputstr |> Problem.load
+    assert true == rulemap |> Problem.is_valid?("a")
+  end
 
   test "example1" do
     inputstr = """
@@ -153,7 +133,9 @@ defmodule Tests do
     aaabbb
     aaaabbb
     """
-    assert 2 == inputstr |> Problem.load |> Problem.part1
+    {rulemap, messages} = inputstr |> Problem.load
+    assert true == Problem.is_valid?("a")
+    # assert 2 == inputstr |> Problem.load |> Problem.part1
 
   end
 
