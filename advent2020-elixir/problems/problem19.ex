@@ -48,57 +48,47 @@ defmodule Problem do
   end
 
   def is_valid?(rulemap, s) do
-    try do
-      for rule_chunk <- Map.get(rulemap, 0) do
-        is_chunk_valid?(rulemap, String.graphemes(s), rule_chunk)
-      end
-      false
-    rescue 
-      e in IsValid -> e
-      true
+    for rule_chunk <- Map.get(rulemap, 0) do
+      is_chunk_valid?(rulemap, String.graphemes(s), rule_chunk)
     end
+    |> Enum.any?
   end
-  # def is_rule_valid?(rulemap, message, rule_chunks) do 
-  #   "is_rule_valid? #{message} #{inspect rule_chunks}" |> IO.puts
-  #   for chunk <- rule_chunks do
-  #     pre_is_chunk_valid?(rulemap, message, chunk)
-  #   end
-  # end
 
-  # def pre_is_chunk_valid?(rulemap, message, chunk) do
-  #   "is_chunk_valid? message=#{inspect message} chunk=#{inspect chunk}" |> IO.puts
-  #   is_chunk_valid?(rulemap, message, chunk)
-  # end
+  # This rule -> chunk -> subchunk terminology sucks
+  #  and it probably has a lot to do with why I got so confused
+  # Passing rulemap around made this cumbersome too.
 
   def is_chunk_valid?(_rulemap, [], []) do
-    # "1.1- [] chunk=#{inspect chunk} RAN OUT OF INPUT" |> IO.puts
-    # we ran out of input
-    raise IsValid
+    # We're out of input and out of rules, this is a valid string!
+    true
   end
   def is_chunk_valid?(_rulemap, [], _nonempty_chunk) do
-    # "1.1- [] chunk=#{inspect chunk} RAN OUT OF INPUT" |> IO.puts
-    # we ran out of input
+    # We're out of input but there's still rules.  That's no good.
     false
   end
-  def is_chunk_valid?(_rulemap, message, []) do
-    "1.2 ran out of rules - [] returning message=#{message}" |> IO.puts
-    # we ran out of rules, return whatever we consumed
+  def is_chunk_valid?(_rulemap, _message, []) do
+    # We're out of rules but there's still input.  That's no good.
     false
   end
   def is_chunk_valid?(rulemap, [c|message], [{:literal, c}|subchunk]) do
-    "2:matching literal c=#{c} message=#{message} subchunk=#{inspect subchunk}" |> IO.puts
+    # The current input char matches the current rule.
+    # Let's remove them both and keep going.
     is_chunk_valid?(rulemap, message, subchunk)
   end
   def is_chunk_valid?(rulemap, [c|message], [{:literal, not_c}|subchunk]) do 
-    "3:mismatchliteral c=#{c} != #{not_c} message=#{message} #{inspect subchunk}" |> IO.puts
-    # we didn't match a literal here, we're done.
+    # The current input char doesn't match the rule.  We're done here.
     false
   end
   def is_chunk_valid?(rulemap, message, [{:rule, id}|subchunk]) do
-    "4:processingrule message=#{message} rule=#{id} subchunk=#{inspect subchunk}" |> IO.puts
+    # This is where I got stuck (among other places)
+    # We're mid-way through processing this subchunk, but this rule will introduce new paths.
+    # We need to pass the new rules in addition to the rules we're already looking at!
+    # I was doing backflips trying to figure out how I could return a list of how many
+    # characters were consumed.  Yeah, real bad idea.
     for rule_chunk <- Map.get(rulemap, id) do
       is_chunk_valid?(rulemap, message, rule_chunk ++ subchunk)
     end
+    |> Enum.any?
   end
   
   def part1({rulemap, received_messages}) do
@@ -664,8 +654,8 @@ defmodule Tests do
     aabaaaaaababbabbabaabbbb
     """
     {rulemap, messages} = inputstr |> Problem.load
-    # assert 190 == inputstr |> Problem.load |> Problem.part1
-    assert 190 == inputstr |> Problem.load |> Problem.part2
+    assert 190 == inputstr |> Problem.load |> Problem.part1
+    assert 311 == inputstr |> Problem.load |> Problem.part2
   end
   
 end
