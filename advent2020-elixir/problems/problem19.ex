@@ -4,6 +4,10 @@ defmodule Util do
   
 end
 
+defmodule IsValid do
+  defexception message: "good jorb"
+end
+
 defmodule Problem do
 
   def load_chunk(s) do
@@ -43,65 +47,57 @@ defmodule Problem do
     {rulemap, messages}
   end
 
-
   def is_valid?(rulemap, s) do
     is_rule_valid?(rulemap, String.graphemes(s), Map.get(rulemap, 0))
   end
-  def is_rule_valid?(rulemap, [], []) do true end
   def is_rule_valid?(rulemap, message, rule_chunks) do 
     "is_rule_valid? #{message} #{inspect rule_chunks}" |> IO.puts
-    rule_chunks
-    |> Stream.map(fn chunk -> is_chunk_valid?(rulemap, message, chunk) end)
-    |> Enum.any?
+    for chunk <- rule_chunks do
+      pre_is_chunk_valid?(rulemap, message, chunk)
+    end
   end
 
-  def is_chunk_valid?(rulemap, [], []) do
-    true
+  def pre_is_chunk_valid?(rulemap, message, chunk) do
+    "is_chunk_valid? message=#{inspect message} chunk=#{inspect chunk}" |> IO.puts
+    is_chunk_valid?(rulemap, message, chunk)
+  end
+
+  def is_chunk_valid?(_rulemap, "", []) do
+    # "1.1- [] chunk=#{inspect chunk} RAN OUT OF INPUT" |> IO.puts
+    # we ran out of input
+    1=0
+    raise IsValid
+  end
+  def is_chunk_valid?(_rulemap, "", _nonempty_chunk) do
+    # "1.1- [] chunk=#{inspect chunk} RAN OUT OF INPUT" |> IO.puts
+    # we ran out of input
+    false
+  end
+  def is_chunk_valid?(_rulemap, message, []) do
+    "1.2 ran out of rules - [] returning message=#{message}" |> IO.puts
+    # we ran out of rules, return whatever we consumed
+    false
   end
   def is_chunk_valid?(rulemap, [c|message], [{:literal, c}|subchunk]) do
+    "2:matching literal c=#{c} message=#{message} subchunk=#{inspect subchunk}" |> IO.puts
     is_chunk_valid?(rulemap, message, subchunk)
   end
   def is_chunk_valid?(rulemap, [c|message], [{:literal, not_c}|subchunk]) do 
+    "3:mismatchliteral c=#{c} != #{not_c} message=#{message} #{inspect subchunk}" |> IO.puts
+    # we didn't match a literal here, we're done.
     false
   end
-  def is_subchunk_valid?(rulemap, [c|message], [{:rule, id}|subchunk]) do
-    is_rule_valid?(rulemap, [c|message], Map.get(rulemap, id)) or is_chunk_valid?(rulemap, message, subchunk)
+  def is_chunk_valid?(rulemap, message, [{:rule, id}|subchunk]) do
+    "4:processingrule message=#{message} rule=#{id} #{inspect subchunk}" |> IO.puts
+    is_rule_valid?(rulemap, message, Map.get(rulemap, id))
   end
-
-  # def is_valid?([m|msg], chunks) do
-  #   chunks = 
-  #   "is_valid #{c}|#{msg} #{ruleidx} #{inspect rule}" |> IO.puts
-  #   for chunk in chunks do
-  #     case chunk do
-  #       [{:literal, rulec}|chunks] -> 
-  #         if c == rulec do
-  #           chunks
-  #           |> Stream.map(fn {:rule, rid} -> is_valid?(msg, rid, rulemap) end)
-  #           |> Enum.all?
-  #         else
-  #           false
-  #         end
-  #       # rest when is_list(rest) ->
-  #       #   # we have a rule, so let's keep the full message and follow it
-  #       #   rest
-  #       #   |> Stream.map(fn {rule: rid} -> is_valid?([c|msg], rid, rulemap) end)
-  #       #   |> Enum.all?
-  #     end
-  #   end
-  #   |> Enum.any?
-  # end
-  
   
   def part1({rulemap, received_messages}) do
     received_messages
     |> Enum.slice(1..1)
     |> Enum.map(fn m -> is_valid?(rulemap, m) end)
   end
-
-
-
 end
-
 
 
 defmodule Tests do 
@@ -110,12 +106,18 @@ defmodule Tests do
   @tag :functions
   test "functions" do
     inputstr = """
-    0: "a"
-    
+    0: 1 1
+    1: "a"
+
     a
     """
     {rulemap, messages} = inputstr |> Problem.load
-    assert true == rulemap |> Problem.is_valid?("a")
+    "----------------------" |> IO.puts
+    assert true == rulemap |> Problem.is_valid?("aa")
+    "----------------------" |> IO.puts
+    assert false == rulemap |> Problem.is_valid?("a")
+    "----------------------" |> IO.puts
+    assert false == rulemap |> Problem.is_valid?("aaa")
   end
 
   test "example1" do
