@@ -4,6 +4,32 @@ defmodule Util do
   
 end
 
+# stolen from
+#  https://elixir-lang.org/getting-started/processes.html#state
+defmodule KV do
+  def start_link do
+    Task.start_link(fn -> loop(%{}) end)
+  end
+
+  defp loop(map) do
+    receive do
+      {:get, key, caller} ->
+        retval = Map.get(map, key)
+        # "GET F(#{inspect key}) => #{retval}" |> IO.puts
+        send caller, retval
+        loop(map)
+      {:all, caller} ->
+        send caller, map
+        loop(map)
+      {:put, key, value} ->
+        # "SET F(#{inspect key})=#{inspect value}" |> IO.puts
+        loop(Map.put(map, key, value))
+    end
+  end
+end
+
+
+
 defmodule Problem do
 
   def load(inputstr) do
@@ -32,12 +58,30 @@ defmodule Problem do
 
 
   def part1(recipes) do
+    {:ok, pid} = KV.start_link
+    Process.register(pid, :global)
+
     result = go(recipes)
     |> Enum.map(fn {ingreds, []} -> Enum.count(ingreds) end)
     |> Enum.sum
     "RESULT #{inspect result}" |> IO.puts
     result
   end
+
+  def part2(recipes) do
+
+    go(recipes)
+
+    send :global, {:all, self()}
+    receive do v -> v end
+    |> IO.inspect
+    |> Enum.sort
+    |> Enum.map(fn {_k, v} -> v end)
+    |> Enum.join(",")
+
+  end
+
+
 
 
   def req_count({_, reqs}) do
@@ -88,6 +132,9 @@ defmodule Problem do
 
     case culprits do
       [culprit] ->
+        # record this in our handy global storage process
+        send :global, {:put, least_allergen, culprit}
+
         recipes
         |> Enum.map(fn {ingreds, reqs} -> {
           ingreds |> Enum.filter(fn i -> i != culprit end),
@@ -113,6 +160,7 @@ defmodule Tests do
     sqjhc fvjkl (contains soy)
     sqjhc mxmxvkd sbzzf (contains fish)"
     assert 5 == inputstr |> Problem.load |> Problem.part1
+    assert "mxmxvkd,sqjhc,fvjkl" == inputstr |> Problem.load |> Problem.part2
   end
 
   test "gotime" do
@@ -160,6 +208,7 @@ defmodule Tests do
     zmjjbr xbgz cd zgthq qlf rpbv fcdf hqj lljxf ckxdjf crbdxfx jmhsl bclml dth dqcg bfrhb dqjjt ntggc tmsllr skhp lvbpvc snxzjb rbpxvk tzxdf nnqnj ksvfdjt ckspdd tfvcrd jqpc bgx dstct gffvc fthkdz hpvmrm hrcfc jzdqp lktt zsmmf cczqczv pvkrf kvljbg nt stndbt jmbpvd jdvxzv jlgr bhmvf mfqqh qchmh fnll blx hgxz bjp rrhg lqjfs nqbnmzx ghlzj sts vmsksq znrzgs kpd dgsbm pgblcd pnddb dhfng gdmj lfglf tsnr ggjh fbmjp xdhc lmfrl rmqvb dxclx qfqskr vtcs crqhxx vvv zlgfs lrj (contains sesame, wheat)
     sts fsmz vpj znrzgs jzdqp fszjvn fngc zszg mrfqdkt ncgqfdk nqbnmzx kdkm qnhck ntggc vmsksq jqpc pcqd fbmjp kfkjg bclml jsgkn dth qfqskr tsnr nntlxx jptf kghc kmdrkg ghlzj cbsqvgt fvz fnll hrcfc dktxc jmhsl xhkdc bmvfs sdvnc dhfng dknxl ddpc vvv kdvq vsn ttvvp bhmvf txdjzsk lljxf zlgfs tzsx rxlps vhbqgc stndbt bgx cbxp jmbpvd bnhhr tlsd phzm cd rcznlx crqhxx ksvfdjt zvgdp zfc dhphkz gdmj lhvv lrj rrhg cczqczv zbjnr xppbd dstct rbpxvk snxzjb scdgmh zbblv (contains wheat, fish, soy)
     bmvfs kghc hrcfc bhnfx kmtmlx zfc xgfgx nqbnmzx cbsqvgt lbhzxvf tzxdf ssfnt svfbm rmqvb bbfxk hqnm hpvmrm vvv qlf fsmz tmsllr cbxp gffvc dxclx lrj lmfrl dstct crbdxfx hgxz rhzdcb bgmh kdkm kpd tfvcrd cczqczv vgqftvk pgblcd kdvq sts bnd cd qchmh jjhl lqjfs dhfng vbdgvk nt zgthq xhkdc jjrsrf ghlzj pgpgvs bqlk zszg pzvddz sdxhbf lljxf fnll jmhsl zmjjbr lvbpvc crqhxx pkzs znrzgs jmbpvd jhxv kjzb snxzjb tzsx pnddb (contains peanuts)"
-    assert 5 == inputstr |> Problem.load |> Problem.part1
+    assert 2436 == inputstr |> Problem.load |> Problem.part1
+    assert 2436 == inputstr |> Problem.load |> Problem.part2
   end
 end
