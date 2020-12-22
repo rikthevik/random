@@ -46,7 +46,7 @@ defmodule Problem do
   def part1(tiles) do
     tiles |> IO.inspect
 
-    reference = for {id, sides} <- tiles, orientation <- [:normal, :vflip, :hflip] do
+    tilemap = for {id, sides} <- tiles, orientation <- [:normal, :vflip, :hflip] do
       {{id, orientation}, orient(orientation, sides)}
     end
     |> Map.new
@@ -62,14 +62,7 @@ defmodule Problem do
     |> List.flatten
     |> IO.inspect
 
-    {id, [top, right, bottom, left]} = tiles |> Enum.at(0)
-    |> IO.inspect
-
-    right_matches = edges
-    |> Enum.filter(fn {side, tile} -> side == right end)
-    |> IO.inspect
-
-
+    
   end
 
 
