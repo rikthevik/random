@@ -1,7 +1,5 @@
 
 
-alias Dlist.DoublyLinkedList, as: DLL
-
 defmodule Util do
   
 end
@@ -62,13 +60,8 @@ defmodule Problem do
   end
   
   def part1(cups, times) do
-
-    {:ok, dll} = DLL.new
-    for c <- cups do
-      dll |> DLL.append(c)
-    end
-
-    result = play1(dll, times, Enum.max(cups))
+    max_val = Enum.max(cups)
+    result = play1(cups, times, max_val)
     |> IO.inspect
     {left, [1|right]} = Enum.split_while(result, fn a -> 1 != a end)
     (right ++ left)
@@ -86,17 +79,13 @@ defmodule Problem do
 
 
   def play1(cups, 0, _) do cups end
-  def play1(cups, times, max_val) do
+  def play1([c|cups], times, max_val) do
+    # Well this is way too slow.  I need a proper deque.
 
-    c = cups |> DLL.first
-    pickup = for i <- 0..2 do cups |> DLL.first end
+    [p1, p2, p3|rest] = cups   # Faster than Enum.slice(3)
+    pickup = [p1, p2, p3]
 
-    rest = 12
-    "c=#{c} #{inspect pickup}" |> IO.inspect
-
-    1=0
-
-    if Integer.mod(times, 1000) == 0 do
+    if Integer.mod(times, 100) == 0 do
       "times: #{times}" |> IO.puts
     end
     # "cups: (#{c}) #{inspect cups}" |> IO.puts
