@@ -22,10 +22,27 @@ def part1(cupstr, times):
     print "part1 %r => %r" % (cupstr, resultstr)
     return resultstr
 
+def part2(cupstr, times):
+    cups = collections.deque()
+    for s in cupstr.strip():
+        cups.append(int(s))
+    cups.extend(range(max(cups), 1000000-len(cups)))
+
+    cups = play(cups, times, max(cups))
+    cups = list(cups)
+    idx = cups.index(1)
+    result = cups[idx+1:] + cups[:idx]
+    # print "".join(map(str, result))
+    resultstr = "".join(map(str, result))
+    print "part2 %r => %r" % (cupstr, resultstr)
+    return resultstr
+
+
 
 def play(cups, times, max_val):
     t = 0
     while t < times:
+        print "move", t
         # print "move", t, ", cups=", cups
         c = cups.popleft()
         # print "c=", c
@@ -38,8 +55,8 @@ def play(cups, times, max_val):
         steps_left = 0
         while True:
             # print "deq=", cups
-            p = cups.popleft()
-            cups.append(p)
+            p = cups[0] 
+            cups.rotate(-1)
             # print "steps_left=%d p=%d" % (steps_left, p)
             steps_left += 1
             if p == dest:
@@ -48,6 +65,7 @@ def play(cups, times, max_val):
                 cups.extend(pickup)
                 # print "after", cups
                 total_steps_left = steps_left+3-1
+                print "rotation", total_steps_left
                 cups.rotate(total_steps_left)
                 # print "postortato %d" % total_steps_left, cups
                 break
@@ -73,6 +91,7 @@ assert part1("389125467", 3) == "34672589"
 assert part1("389125467", 10) == "92658374"
 assert part1("389125467", 100) == "67384529"
 assert part1("368195742", 100) == "95648732"
+print part2("368195742", 10000000)
 
 
 
