@@ -12,24 +12,10 @@ defmodule Problem do
   defstruct [:w, :tiles, :sol]
   def new(tiles) do
     %Problem{
-      w: Integer.floor(:math.sqrt(Enum.count(tiles)))
+      w: Integer.floor(:math.sqrt(Enum.count(tiles))) - 1
     }
   end
 
-  def try(p, {0, 0}, tileid) do 
-    # top left corner piece
-    # needs to have 0 match left and 0 match top
-  def try(p, {x, 0}, tileid) do 
-    # top row
-    # needs to have 1 match left and 0 match top
-  end
-  def try(p, {0, y}, tileid) do 
-    # left side
-    # needs to have 0 match left and 1 match top
-  end
-  def try(p, {0, y}, tileid) do 
-    # middle somewhere
-  end
 
   def load(inputstr) do
     inputstr 
@@ -56,53 +42,45 @@ defmodule Problem do
     bottom = rows |> Enum.at(9) |> String.reverse
     left = rows |> Enum.reverse |> Enum.map(fn s -> String.at(s, 0) end) |> Enum.join("")
 
-    {id, [top, right, bottom, left]}
+    {id, [left, top, right, bottom]}
   end
     
 
   def orient(sides, :normal) do sides end
   def orient(sides, :vflip) do vflip(sides) end
   def orient(sides, :hflip) do hflip(sides) end
-  def vflip([top, right, bottom, left]) do
+  def vflip([sdleft, top, right, bottom]) do
     [bottom, String.reverse(right), top, String.reverse(left)]
   end
-  def hflip([top, right, bottom, left]) do
+  def hflip([left, top, right, bottom]) do
     [String.reverse(top), left, String.reverse(bottom), right]
   end
   def rotate_cw(sides, 0) do sides end
-  def rotate_cw([top, right, bottom, left], times) do
+  def rotate_cw([left, top, right, bottom], times) do
     rotate_cw([left, top, right, bottom], times-1)
+  end
+  
+  def variations(sides) do
+    for orientation <- [:normal, :vflip, :hflip], oriented_sides = orient(sides, orientation), i <- 0..3 do
+      oriented_sides |> rotate_cw(i)
+    end
   end
 
   def part1(tiles) do
     tiles |> IO.inspect
 
-    # tilemap = for {id, sides} <- tiles, orientation <- [:normal, :vflip, :hflip] do
-    #   {{id, orientation}, orient(orientation, sides)}
-    # end
-    # |> Map.new
-    # |> IO.inspect
-    
-    # edges = for {id, sides} <- tiles do
-    #   for orientation <- [:normal, :vflip, :hflip] do
-    #     for side <- orient(sides, orientation) do
-    #       {side, {id, orientation}}
-    #     end
-    #   end
-    # end
-    # |> List.flatten
-    # |> IO.inspect
+    tile_to_variations = tiles
+    |> Enum.map(fn {id, sides} -> {id, variations(sides)} end)
+    |> Map.new
 
-    for {id, sides} <- tiles |> Enum.slice(0, 1) do
-      for orientation <- [:normal, :vflip, :hflip] do
-        oriented_sides = orient(sides, orientation)
-        for i <- 0..3 do
-          [top, _right, _bottom, left] = oriented_sides |> rotate_cw(i)
-          # looking for a left and a top that has no other matches
-          
-        end
+    border_to_id = tile_to_variations
+    |> Enum.map(fn {id, sides_list} ->
+      Enum.map(sides_list, fn sides -> {}))
+
+    for {id, sides} do
+      for [l, t, _r, _b] in Map.get(tile_to_variations, id) do
+
       end
-      
     end
 
 
