@@ -77,12 +77,9 @@ defmodule Problem do
   end
 
   def part1(cups, times) do
-    "CUPS = #{inspect cups}" |> IO.puts
     head = Enum.at(cups, 0)
-    "HEAD = #{head}" |> IO.puts
     max_val = Enum.max(cups)
     cups = ErikList.new(cups)
-    "max_val=#{max_val}" |> IO.puts
     result = play1(cups, times, head, max_val)
     |> IO.inspect
     [1|rest] = result
@@ -147,8 +144,8 @@ defmodule Problem do
     head = Enum.at(cups, 0)
     total_list = p2_list(cups)
     cups = ErikList.new(total_list)
-    play1(cups, times, head, max_val)
-    
+    [1, a, b|_] = play1(cups, times, head, 1_000_000)
+    a * b
   end
 
 end
@@ -189,19 +186,15 @@ defmodule Tests do
     assert Enum.to_list(1..1_000_000) |> Enum.sort == "368195742" |> Problem.load |> Problem.p2_list |> Enum.sort
   end
 
-  test "go time" do
-    
-    assert "95648732" == "368195742" |> Problem.load |> Problem.part1(100)
-    
-    # assert 149245887792 == inputstr |> Problem.load |> Problem.part2(10_000_000)
+  @tag :p2example
+  test "p2 example" do
+    assert 149245887792 == "389125467" |> Problem.load |> Problem.part2(10_000_000)
+  end
 
-    # result = "389125467" |> Problem.load |> Problem.part2(10_000_000)
-    # assert Enum.to_list(1..1_000_000) |> Enum.sort == result |> Enum.sort
-    # [1, a, b|_] = result
-    # "a=#{a}, b=#{b}, val=#{a*b}" |> IO.puts
-    # last_ten = result |> Enum.slice(-10..-1)
-    # "LAST #{inspect last_ten}" |> IO.puts
-    # assert 149245887792 == a * b
+  @tag :gotime
+  test "go time" do
+    assert "95648732" == "368195742" |> Problem.load |> Problem.part1(100)
+    assert 192515314252 == "368195742" |> Problem.load |> Problem.part2(10_000_000)
   end
 
  end
