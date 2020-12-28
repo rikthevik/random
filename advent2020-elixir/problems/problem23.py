@@ -52,11 +52,8 @@ def play(cups, times, max_val):
         pickup = [ cups.popleft() for i in range(3) ]
         # print("c=", c, "pickup=", pickup)
         
-        cups.appendleft(c)
-
         dest = find_dest(c-1, pickup, max_val)
         # print("dest=", dest)
-        steps_left = 0
 
         # Old method was to rotate through the deque to find c
         # In python3.5 they added a .index() method that
@@ -65,13 +62,18 @@ def play(cups, times, max_val):
         # one rotation - but how does that perform internally?
 
         idx = cups.index(dest)
-        rotate_right = restlen - idx - 1
+        [ cups.insert(idx+1, p) for p in reversed(pickup) ]
+
+        cups.append(c)
+
+        # Bunch of rotation stuff
+        # rotate_right = restlen - idx - 1
         # print("FOUND IDX", idx, cups, "rotate_right=", rotate_right)
-        cups.rotate(+rotate_right)
+        # cups.rotate(+rotate_right)
         # print("AFTER ROTATE", cups)
-        cups.extend(pickup)
+        # cups.extend(pickup)
         # print("AFTER EXTEND", cups)
-        cups.rotate(-(rotate_right+1))
+        # cups.rotate(-(rotate_right+1))
         # print("AFTER 2ROTATE", cups)
 
         # print(" ", cups)
@@ -90,13 +92,13 @@ def find_dest(c, pickup, max_val):
         return c
 
 
-# assert part1("389125467", 1) == "54673289"
-# assert part1("389125467", 2) == "32546789"
-# assert part1("389125467", 3) == "34672589"
-# assert part1("389125467", 10) == "92658374"
-# assert part1("389125467", 100) == "67384529"
-# assert part1("368195742", 100) == "95648732"
-assert part2("389125467", 0) == 10
+assert part1("389125467", 1) == "54673289"
+assert part1("389125467", 2) == "32546789"
+assert part1("389125467", 3) == "34672589"
+assert part1("389125467", 10) == "92658374"
+assert part1("389125467", 100) == "67384529"
+assert part1("368195742", 100) == "95648732"
+# assert part2("389125467", 0) == 10
 
 # It takes about 12s per 1k rotations.
 # So that's about 3h20m to see if this thing is correct.
