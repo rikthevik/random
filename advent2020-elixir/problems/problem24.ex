@@ -35,7 +35,7 @@ defmodule Problem do
   def flip(:white) do :black end
   def flip(:black) do :white end
   
-  def part1(paths) do
+  def tiles_from_paths(paths) do
     for path <- paths do
       last_hex(path, {0, 0})
     end
@@ -43,15 +43,75 @@ defmodule Problem do
     |> Enum.reduce(Map.new, fn {x, y}, m ->
       Map.put(m, {x, y}, flip(Map.get(m, {x, y}, :white)))
     end)
+  end
+
+  def part1(paths) do
+    tiles_from_paths(paths)
     |> Enum.count(fn {_k, v} -> v == :black end)
   end
 
-  
+  ##########
 
+  def part2(paths, times) do
+    paths
+    |> tiles_from_paths
+    |> Enum.filter(fn {_k, v} -> v == :black end)
+    |> Enum.map(fn {k, _v} -> k end)
+    |> MapSet.new
+    |> traverse(times)
+    |> Enum.count
+  end
 
+  def find_neighbours({x, y}) do 
+    [
+      {x+1, y+0},
+      {x+0, y-1},
+      {x-1, y-1},
+      {x-1, y+0},
+      {x+0, y+1},
+      {x+1, y+1},
+    ]    
+  end
+
+  def flip_if(:white, 2) do :black end
+  def flip_if(:white, count) when count > 0 do :white end
+  def flip_if(:black, 0) do :white end
+  def flip_if(:black, 1) do :black end
+  def flip_if(:black, 2) do :black end
+  def flip_if(:black, count) when count > 2 do :white end
+
+  def flip_floor(black_tiles, {x, y}) do
+    count = find_neighbours({x, y})
+    |> MapSet.new
+    |> MapSet.intersection(black_tiles)
+    |> Enum.count
+
+    tile_color = if MapSet.member?(black_tiles, {x, y}), do: :black, else: :white
+    {{x, y}, flip_if(tile_color, count)}
+  end
+
+  def traverse(black_tiles, 0) do black_tiles end
+  def traverse(black_tiles, times) do 
+    "times=#{times}" |> IO.puts
+
+    neighbours_set = black_tiles
+    |> Enum.map(&find_neighbours/1)
+    |> Enum.concat
+    |> MapSet.new
+    # |> IO.inspect
+
+    active_points = black_tiles
+    |> MapSet.union(neighbours_set)
+    # |> IO.inspect
+
+    active_points
+    |> Enum.map(fn {x, y} -> flip_floor(black_tiles, {x, y}) end)
+    |> Enum.filter(fn {_k, v} -> v == :black end)
+    |> Enum.map(fn {k, _v} -> k end)
+    |> MapSet.new
+    |> traverse(times-1)
+  end
 end
-
-
 
 defmodule Tests do 
   use ExUnit.Case
@@ -79,6 +139,11 @@ defmodule Tests do
     neswnwewnwnwseenwseesewsenwsweewe
     wseweeenwnesenwwwswnew"
     assert 10 == inputstr |> Problem.load |> Problem.part1
+    assert 10 == inputstr |> Problem.load |> Problem.part2(0)
+    assert 15 == inputstr |> Problem.load |> Problem.part2(1)
+    assert 12 == inputstr |> Problem.load |> Problem.part2(2)
+    assert 25 == inputstr |> Problem.load |> Problem.part2(3)
+    assert 2208 == inputstr |> Problem.load |> Problem.part2(100)
   end
 
   test "gotime" do
@@ -553,6 +618,7 @@ defmodule Tests do
     seseewenwseseseesesew
     seneswseswnweneseswnwwnwsenenwsenwsesww
     wwseneswswwswwneseswswswswwseswswwne"
-    assert 12345 == inputstr |> Problem.load |> Problem.part1
+    assert 391 == inputstr |> Problem.load |> Problem.part1
+    assert 1 == inputstr |> Problem.load |> Problem.part2(100)
   end
  end
