@@ -13,7 +13,7 @@ defmodule ErikList do
     |> Enum.zip(Enum.slice(elems, 1..-1))
     |> Enum.concat([{Enum.at(elems, -1), Enum.at(elems, 0)}])
     |> Map.new
-    |> IO.inspect
+    # |> IO.inspect
   end
 
   def next(el, src) do
@@ -95,27 +95,27 @@ defmodule Problem do
   end
   def play1(cups, times, head, max_val) do
     
-    "times=#{times} head=#{head} max_val=#{max_val}" |> IO.puts
-    cups |> ErikList.to_list(head) |> IO.inspect
+    # "times=#{times} head=#{head} max_val=#{max_val}" |> IO.puts
+    # cups |> ErikList.to_list(head) |> IO.inspect
     
     {cups_without_pickup, pickup} = cups |> ErikList.pop_next_list(head, 3)
-    cups_without_pickup |> ErikList.to_list(head) |> IO.inspect
+    # cups_without_pickup |> ErikList.to_list(head) |> IO.inspect
 
 
-    if Integer.mod(times, 100) == 0 do
+    if Integer.mod(times, 25000) == 0 do
       "times: #{times}" |> IO.puts
     end
     
     # "pick up: #{inspect pickup}" |> IO.puts
     dest = prefind_dest(head-1, pickup, max_val)
-    "destination: #{dest}" |> IO.puts
+    # "destination: #{dest}" |> IO.puts
     
     newcups = cups_without_pickup 
     |> ErikList.extend_at_element(dest, pickup)
-    newcups |> ErikList.to_list(head) |> IO.inspect
+    # newcups |> ErikList.to_list(head) |> IO.inspect
 
     newhead = ErikList.next(newcups, head)
-    "newhead=#{newhead}" |> IO.puts
+    # "newhead=#{newhead}" |> IO.puts
     # "newcups = #{inspect newcups}\n" |> IO.puts
     play1(newcups, times-1, newhead, max_val)
   end
@@ -137,13 +137,19 @@ defmodule Problem do
     end
   end
 
-  def part2(cups, times) do
-    # max_val = cups |> Enum.max
-    # result = play1(cups ++ Enum.to_list(max_val..1_000_000), times, max_val)
-    # {left, [1, a, b|right]} = Enum.split_while(result, fn a -> 1 != a end)
-    # a * b
+  def p2_list(cups) do
+    max_val = cups |> Enum.max
+    cups ++ Enum.to_list((max_val+1)..1_000_000)
   end
 
+  def part2(cups, times) do
+    max_val = cups |> Enum.max
+    head = Enum.at(cups, 0)
+    total_list = p2_list(cups)
+    cups = ErikList.new(total_list)
+    play1(cups, times, head, max_val)
+    
+  end
 
 end
 
@@ -170,6 +176,7 @@ defmodule Tests do
     assert ["a", "b", "B", "c"] == el |> ErikList.insert_at_element("b", "B") |> ErikList.to_list("a")
     assert ["a", "b", "c", "C"] == el |> ErikList.insert_at_element("c", "C") |> ErikList.to_list("a")
     assert ["a", "b", "B", "BB", "c"] == el |> ErikList.extend_at_element("b", ["B", "BB"]) |> ErikList.to_list("a")
+    assert ["a", "b", "c", "B", "BB"] == el |> ErikList.extend_at_element("c", ["B", "BB"]) |> ErikList.to_list("a")
     
     {el2, rem} = el |> ErikList.pop_next("a")
     assert rem == "b"
@@ -178,13 +185,23 @@ defmodule Tests do
     {el2, remlist} = el |> ErikList.pop_next_list("a", 2)
     assert remlist == ["b", "c"]
     assert ["a"] == el2 |> ErikList.to_list("a")
+
+    assert Enum.to_list(1..1_000_000) |> Enum.sort == "368195742" |> Problem.load |> Problem.p2_list |> Enum.sort
   end
 
-  # test "go time" do
-  #   inputstr = "368195742"
-  #   assert "95648732" == inputstr |> Problem.load |> Problem.part1(100)
-  #   assert 10 == inputstr |> Problem.load |> Problem.part2(0)
-  #   assert 149245887792 == inputstr |> Problem.load |> Problem.part2(10_000_000)
-  # end
+  test "go time" do
+    
+    assert "95648732" == "368195742" |> Problem.load |> Problem.part1(100)
+    
+    # assert 149245887792 == inputstr |> Problem.load |> Problem.part2(10_000_000)
+
+    # result = "389125467" |> Problem.load |> Problem.part2(10_000_000)
+    # assert Enum.to_list(1..1_000_000) |> Enum.sort == result |> Enum.sort
+    # [1, a, b|_] = result
+    # "a=#{a}, b=#{b}, val=#{a*b}" |> IO.puts
+    # last_ten = result |> Enum.slice(-10..-1)
+    # "LAST #{inspect last_ten}" |> IO.puts
+    # assert 149245887792 == a * b
+  end
 
  end
