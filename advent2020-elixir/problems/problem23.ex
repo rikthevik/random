@@ -1,46 +1,68 @@
 
-
 defmodule Util do
   
 end
 
-# stolen from
-#  https://elixir-lang.org/getting-started/processes.html#state
-defmodule Global do
-  def start_link() do
-    {:ok, pid} = Task.start_link(fn -> loop(%{}) end)
-    Process.register(pid, :global)
+
+defmodule ErikList do
+  # A link list with a Map structure underneath it.
+  # Traversals aren't gonna be fast, but insertions should be.
+  
+  def new(elems) do
+    elems
+    |> Enum.zip(Enum.slice(elems, 1..-1))
+    |> Enum.concat([{Enum.at(elems, -1), Enum.at(elems, 0)}])
+    |> Map.new
+    |> IO.inspect
   end
 
-  defp loop(map) do
-    receive do
-      {:get, key, caller} ->
-        retval = Map.get(map, key)
-        "GET F(#{inspect key}) => #{inspect retval}" |> IO.puts
-        send caller, retval
-        loop(map)
-      {:all, caller} ->
-        send caller, map
-        loop(map)
-      {:put, key, value} ->
-        "SET F(#{inspect key}) := #{inspect value}" |> IO.puts
-        loop(Map.put(map, key, value))
+  def next(el, src) do
+    Map.fetch!(el, src)
+  end
+  def pop_next(el, src) do
+    removed = Map.fetch!(el, src)
+    dest = Map.fetch!(el, removed)
+    el2 = el
+    |> Map.delete(removed)
+    |> Map.put(src, dest)
+    {el2, removed}
+  end
+  def pop_next_list(el, src, num_items) do 
+    pop_next_list(el, src, num_items, [])  
+  end
+  def pop_next_list(el, _src, 0, acc) do {el, Enum.reverse(acc)} end
+  def pop_next_list(el, src, num_items, acc) do
+    {el2, remitem} = pop_next(el, src)
+    pop_next_list(el2, src, num_items-1, [remitem|acc])
+  end
+
+  def insert_at_element(el, src, newitem) do
+    dest = Map.fetch!(el, src)
+    el
+    |> Map.put(src, newitem)
+    |> Map.put(newitem, dest)
+  end
+  def extend_at_element(el, src, []) do el end
+  def extend_at_element(el, src, [newitem|newitems]) do
+    el
+    |> insert_at_element(src, newitem)
+    |> extend_at_element(newitem, newitems)
+  end
+
+  def to_list(el, head) do
+    to_list(el, head, head, [])
+  end
+  def to_list(el, curr, stop_at, acc) do
+    dest = Map.fetch!(el, curr)
+    if dest == stop_at do
+      Enum.reverse([curr|acc])
+    else
+      to_list(el, dest, stop_at, [curr|acc])
     end
   end
+  
 
-  def put(k, v) do
-    send :global, {:put, k, v}
-  end
 
-  def get(k) do
-    send :global, {:get, k, self()}
-    receive do v -> v end
-  end
-
-  def all() do
-    send :global, {:all, self()}
-    receive do v -> v end
-  end
 end
 
 
@@ -54,50 +76,48 @@ defmodule Problem do
     |> IO.inspect
   end
 
-  def finish(cups) do
-    # find 1 and show everything after
-    cups
-  end
-  
   def part1(cups, times) do
+    "CUPS = #{inspect cups}" |> IO.puts
+    head = Enum.at(cups, 0)
+    "HEAD = #{head}" |> IO.puts
     max_val = Enum.max(cups)
-    result = play1(cups, times, max_val)
+    cups = ErikList.new(cups)
+    "max_val=#{max_val}" |> IO.puts
+    result = play1(cups, times, head, max_val)
     |> IO.inspect
-    {left, [1|right]} = Enum.split_while(result, fn a -> 1 != a end)
-    (right ++ left)
+    [1|rest] = result
+    rest
     |> Enum.join("")
   end
-
-  def insert_on_match([c|rest], c, to_insert) do
-    # "insert_on_match1 c=#{c} rest=#{inspect rest} to_insert=#{inspect to_insert}" |> IO.puts
-    [c|to_insert] ++ rest
+  
+  def play1(cups, times=0, _head, _max_val) do 
+    cups |> ErikList.to_list(1) 
   end
-  def insert_on_match([not_c|rest], c, to_insert) do
-    # "insert_on_match2 c=#{c} rest=#{inspect rest} not_c=#{not_c} to_insert=#{inspect to_insert}" |> IO.puts
-    [not_c|insert_on_match(rest, c, to_insert)]
-  end
+  def play1(cups, times, head, max_val) do
+    
+    "times=#{times} head=#{head} max_val=#{max_val}" |> IO.puts
+    cups |> ErikList.to_list(head) |> IO.inspect
+    
+    {cups_without_pickup, pickup} = cups |> ErikList.pop_next_list(head, 3)
+    cups_without_pickup |> ErikList.to_list(head) |> IO.inspect
 
-
-  def play1(cups, 0, _) do cups end
-  def play1([c|cups], times, max_val) do
-    # Well this is way too slow.  I need a proper deque.
-
-    [p1, p2, p3|rest] = cups   # Faster than Enum.slice(3)
-    pickup = [p1, p2, p3]
 
     if Integer.mod(times, 100) == 0 do
       "times: #{times}" |> IO.puts
     end
-    # "cups: (#{c}) #{inspect cups}" |> IO.puts
+    
     # "pick up: #{inspect pickup}" |> IO.puts
-    dest = prefind_dest(c-1, pickup, max_val)
-    # "destination: #{dest}" |> IO.puts
+    dest = prefind_dest(head-1, pickup, max_val)
+    "destination: #{dest}" |> IO.puts
     
-    newcups = rest 
-    |> insert_on_match(dest, pickup)
-    
+    newcups = cups_without_pickup 
+    |> ErikList.extend_at_element(dest, pickup)
+    newcups |> ErikList.to_list(head) |> IO.inspect
+
+    newhead = ErikList.next(newcups, head)
+    "newhead=#{newhead}" |> IO.puts
     # "newcups = #{inspect newcups}\n" |> IO.puts
-    play1(newcups ++ [c], times-1, max_val)
+    play1(newcups, times-1, newhead, max_val)
   end
 
   def prefind_dest(c, pickup, max_val) do
@@ -118,10 +138,10 @@ defmodule Problem do
   end
 
   def part2(cups, times) do
-    max_val = cups |> Enum.max
-    result = play1(cups ++ Enum.to_list(max_val..1_000_000), times, max_val)
-    {left, [1, a, b|right]} = Enum.split_while(result, fn a -> 1 != a end)
-    a * b
+    # max_val = cups |> Enum.max
+    # result = play1(cups ++ Enum.to_list(max_val..1_000_000), times, max_val)
+    # {left, [1, a, b|right]} = Enum.split_while(result, fn a -> 1 != a end)
+    # a * b
   end
 
 
@@ -139,10 +159,32 @@ defmodule Tests do
     assert "67384529" == inputstr |> Problem.load |> Problem.part1(100)
   end
 
-  test "go time" do
-    inputstr = "368195742"
-    assert "95648732" == inputstr |> Problem.load |> Problem.part1(100)
-    assert 149245887792 == inputstr |> Problem.load |> Problem.part2(10_000_000)
+  @tag :functions
+  test "functions" do
+    el = ["a", "b", "c"] |> ErikList.new
+    assert ["a", "b", "c"] == el |> ErikList.to_list("a")
+    assert ["b", "c", "a"] == el |> ErikList.to_list("b")
+    assert "b" == el |> ErikList.next("a")
+    assert "c" == el |> ErikList.next("b")
+    assert "a" == el |> ErikList.next("c")
+    assert ["a", "b", "B", "c"] == el |> ErikList.insert_at_element("b", "B") |> ErikList.to_list("a")
+    assert ["a", "b", "c", "C"] == el |> ErikList.insert_at_element("c", "C") |> ErikList.to_list("a")
+    assert ["a", "b", "B", "BB", "c"] == el |> ErikList.extend_at_element("b", ["B", "BB"]) |> ErikList.to_list("a")
+    
+    {el2, rem} = el |> ErikList.pop_next("a")
+    assert rem == "b"
+    assert ["a", "c"] == el2 |> ErikList.to_list("a")
+    
+    {el2, remlist} = el |> ErikList.pop_next_list("a", 2)
+    assert remlist == ["b", "c"]
+    assert ["a"] == el2 |> ErikList.to_list("a")
   end
+
+  # test "go time" do
+  #   inputstr = "368195742"
+  #   assert "95648732" == inputstr |> Problem.load |> Problem.part1(100)
+  #   assert 10 == inputstr |> Problem.load |> Problem.part2(0)
+  #   assert 149245887792 == inputstr |> Problem.load |> Problem.part2(10_000_000)
+  # end
 
  end
