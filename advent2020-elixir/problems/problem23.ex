@@ -5,9 +5,15 @@ end
 
 
 defmodule ErikList do
-  # A link list with a Map structure underneath it.
-  # Traversals aren't gonna be fast, but insertions should be.
+  # A circularly linked list with a Map structure underneath it.
+  # This only works because each element in the list is unique.
+  # Traversals won't be fast, but insertions/deletions should be.
   
+  # Note that there is no head pointer.  All of the functions
+  # are relative to whatever element you want.  Because it's
+  # O(1) lookups, we sorta don't care where you start from.
+
+  # Store a map of src->dest edges.
   def new(elems) do
     elems
     |> Enum.zip(Enum.slice(elems, 1..-1))
@@ -16,9 +22,13 @@ defmodule ErikList do
     # |> IO.inspect
   end
 
+  # Go to the next element in the list.
   def next(el, src) do
     Map.fetch!(el, src)
   end
+
+  # Pops the value after this element.
+  # Return the new list and the item it popped.
   def pop_next(el, src) do
     removed = Map.fetch!(el, src)
     dest = Map.fetch!(el, removed)
@@ -27,6 +37,9 @@ defmodule ErikList do
     |> Map.put(src, dest)
     {el2, removed}
   end
+
+  # Pops N items off after the specified element.
+  # Return the new list and the list of items it popped.
   def pop_next_list(el, src, num_items) do 
     pop_next_list(el, src, num_items, [])  
   end
@@ -36,12 +49,16 @@ defmodule ErikList do
     pop_next_list(el2, src, num_items-1, [remitem|acc])
   end
 
+  # Inserts an element after the specified element.
   def insert_at_element(el, src, newitem) do
-    dest = Map.fetch!(el, src)
+    dest = ErikList.next(el, src)
     el
     |> Map.put(src, newitem)
     |> Map.put(newitem, dest)
   end
+
+  # Inserts N elements after the specified elements.
+  #  (I thought this one was pretty snappy :)
   def extend_at_element(el, src, []) do el end
   def extend_at_element(el, src, [newitem|newitems]) do
     el
@@ -49,11 +66,14 @@ defmodule ErikList do
     |> extend_at_element(newitem, newitems)
   end
 
+  # This is the closest we get to traversing the list.
+  # It's O(n) but these map lookups are gonna be slow.
   def to_list(el, head) do
+    # Tail recursive, build up the result in acc.
     to_list(el, head, head, [])
   end
   def to_list(el, curr, stop_at, acc) do
-    dest = Map.fetch!(el, curr)
+    dest = ErikList.next(el, curr)
     if dest == stop_at do
       Enum.reverse([curr|acc])
     else
@@ -61,8 +81,6 @@ defmodule ErikList do
     end
   end
   
-
-
 end
 
 
