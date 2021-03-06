@@ -9,13 +9,32 @@ end
 
 defmodule Problem do
 
-  defstruct [:w, :tiles, :sol]
+  defstruct [:bound, :border_to_id, :id_to_variations]
+
   def new(tiles) do
+    id_to_variations = tiles
+    |> Enum.map(fn {id, sides} -> {id, variations(sides)} end)
+    |> Map.new
+
+    border_to_id = for {id, sides_list} <- id_to_variations do
+      for sides <- sides_list do
+        for border <- sides do
+          {border, id}
+        end
+      end
+    end
+    |> List.flatten
+    |> Enum.group_by(fn {b, id} -> b end, fn {b, id} -> id end)
+    |> Enum.map(fn {b, ids} -> {b, MapSet.new(ids)} end)
+    |> Map.new
+    |> IO.inspect
+
     %Problem{
-      w: Integer.floor(:math.sqrt(Enum.count(tiles))) - 1
+      bound: Kernel.floor(:math.sqrt(Enum.count(tiles))) - 1,
+      id_to_variations: id_to_variations,
+      border_to_id: border_to_id,
     }
   end
-
 
   def load(inputstr) do
     inputstr 
@@ -26,13 +45,12 @@ defmodule Problem do
   end
 
 
-
   def load_tile(rowstr) do
     [idline|rows] = rowstr |> String.split(~r/\n/)
     [_, idstr] = Regex.run(~r/Tile (\d+):/, idline)
     id = idstr |> String.to_integer
 
-    # Make sure our tiles are okay.
+    # no alarms and no surprises
     10 = rows |> Enum.count
     10 = rows |> Enum.at(0) |> String.length
     
@@ -49,7 +67,7 @@ defmodule Problem do
   def orient(sides, :normal) do sides end
   def orient(sides, :vflip) do vflip(sides) end
   def orient(sides, :hflip) do hflip(sides) end
-  def vflip([sdleft, top, right, bottom]) do
+  def vflip([left, top, right, bottom]) do
     [bottom, String.reverse(right), top, String.reverse(left)]
   end
   def hflip([left, top, right, bottom]) do
@@ -67,26 +85,29 @@ defmodule Problem do
   end
 
   def part1(tiles) do
-    tiles |> IO.inspect
+    prob = Problem.new(tiles)
+    |> IO.inspect
 
-    tile_to_variations = tiles
-    |> Enum.map(fn {id, sides} -> {id, variations(sides)} end)
-    |> Map.new
+    ids = Map.keys(prob.id_to_variations)
 
-    border_to_id = tile_to_variations
-    |> Enum.map(fn {id, sides_list} ->
-      Enum.map(sides_list, fn sides -> {}))
-
-    for {id, sides} do
-      for [l, t, _r, _b] in Map.get(tile_to_variations, id) do
-
-      end
-    end
-
-
+    id = 1951
+    remaining = Enum.filter(ids, fn i -> i != id end)
+    attempt(prob, {0, 0}, id, remaining)
   end
 
+  def attempt(prob, {0, 0}, id, remaining) do
+    "PUTS #{id} #{inspect remaining}" |> IO.puts
+    for sides <- prob.id_to_variations[id] do 
+      "SIDES #{id} => #{inspect sides}" |> IO.puts
+      goforit(prob, {0, 0}, id, sides)
+    end
+  end
 
+  def goforit(prob, {0, 0}, id, sides) do
+    
+  end
+  
+  
 
 end
 
