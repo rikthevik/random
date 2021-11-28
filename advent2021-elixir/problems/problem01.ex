@@ -22,9 +22,12 @@ defmodule Tests do
     |> String.trim
     |> String.split
     |> Enum.map(&String.to_integer/1)
+
   end
 
   test "example" do
+      assert 1 == 1
+
   end
 
   test "go time" do
