@@ -10,11 +10,11 @@ defmodule Problem do
   end
 
   def part2(rows) do
-  
+
   end
 end
 
-defmodule Tests do 
+defmodule Tests do
   use ExUnit.Case
 
   def prepare(input) do
