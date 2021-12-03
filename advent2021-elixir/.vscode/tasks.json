@@ -6,7 +6,7 @@
         {
             "label": "Mix Test Single",
             "type": "shell",
-            "command": "mix test --trace poop --color ${relativeFile}",
+            "command": "mix test --trace --color ${relativeFile}",
             "presentation": {
                 "echo": true,
                 "reveal": "always",

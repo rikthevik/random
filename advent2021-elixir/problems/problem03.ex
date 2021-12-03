@@ -11,7 +11,7 @@ defmodule Part1 do
   def most_common_bit(bits) do
     {bit, _freq} = bits
     |> Enum.frequencies
-    |> Enum.max_by(fn {bit, freq} -> freq end)
+    |> Enum.max_by(fn {_bit, freq} -> freq end)
     bit
   end
 
@@ -27,7 +27,7 @@ defmodule Part1 do
   def invert_bit(0) do 1 end
   def invert_bit(1) do 0 end
 
-  def find_gamma(rows) do
+  def run(rows) do
     gamma_list = rows
     |> Util.transpose
     |> Enum.map(&most_common_bit/1)
@@ -37,19 +37,51 @@ defmodule Part1 do
 
     gamma * epsilon
   end
-
-
-
-  def run(rows) do
-    gamma_list = rows |> find_gamma |> IO.inspect
-
-
-  end
 end
 
 defmodule Part2 do
   def run(rows) do
+    find_o(rows, 0) * find_co2(rows, 0)
   end
+
+  def o_criteria(bits) do
+    %{0 => count0, 1 => count1} = bits
+    |> Enum.frequencies
+    if count0 <= count1 do 1 else 0 end
+  end
+
+  def co2_criteria(bits) do
+    bits
+    |> o_criteria
+    |> Part1.invert_bit
+  end
+
+
+  def bit_at(bits, idx) do
+    bits |> Enum.at(idx)
+  end
+
+  def find_o([result], _) do Part1.bits_to_int(result) end
+  def find_o(pool, idx) do
+    most_common = pool
+    |> Enum.map(fn bits -> Enum.at(bits, idx) end)
+    |> o_criteria
+    pool
+    |> Enum.filter(fn bits -> bit_at(bits, idx) == most_common end)
+    |> find_o(idx+1)
+  end
+
+  def find_co2([result], _) do Part1.bits_to_int(result) end
+  def find_co2(pool, idx) do
+    least_common = pool
+    |> Enum.map(fn bits -> Enum.at(bits, idx) end)
+    |> co2_criteria
+    pool
+    |> Enum.filter(fn bits -> bit_at(bits, idx) == least_common end)
+    |> find_co2(idx+1)
+  end
+
+
 
 end
 
@@ -84,7 +116,7 @@ defmodule Tests do
       01010
       "
       assert 198 == input |> prepare |> Part1.run
-      # assert 5 == input |> prepare |> Part2.run
+      assert 230 == input |> prepare |> Part2.run
   end
 
   test "go time" do
@@ -1088,6 +1120,7 @@ defmodule Tests do
     010000000011
     000110000010
     000001101000"
-    assert 198 == input |> prepare |> Part1.run
+    assert 2498354 == input |> prepare |> Part1.run
+    assert 2498354 == input |> prepare |> Part2.run
   end
 end
