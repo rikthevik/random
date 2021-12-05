@@ -10,9 +10,10 @@ defmodule Part1 do
   def points_for_line({{x1, y}, {x2, y}}) do
     for x <- x1..x2 do {x, y} end
   end
-  def points_for_line(_) do [] end
+  # def points_for_line(_) do [] end
   def run(rows) do
     rows
+    |> Enum.filter(fn {{x1, y1}, {x2, y2}} -> x1 == x2 or y1 == y2 end)
     |> Enum.map(&points_for_line/1)
     |> List.flatten
     |> Enum.frequencies
