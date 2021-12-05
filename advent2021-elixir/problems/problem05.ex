@@ -4,13 +4,22 @@ defmodule Util do
 end
 
 defmodule Part1 do
+  def sign(i) when i >= 0 do 1 end
+  def sign(i) when i <= 0 do -1 end
+
   def points_for_line({{x, y1}, {x, y2}}) do
     for y <- y1..y2 do {x, y} end
   end
   def points_for_line({{x1, y}, {x2, y}}) do
     for x <- x1..x2 do {x, y} end
   end
-  # def points_for_line(_) do [] end
+  def points_for_line({p1, p2}) do
+    [{x1, y1}, {x2, y2}] = Enum.sort([p1, p2])
+    for step <- 0..(x2-x1) do
+      {x1 + step, y1 + step * sign(y2-y1)}
+    end
+  end
+
   def run(rows) do
     rows
     |> Enum.filter(fn {{x1, y1}, {x2, y2}} -> x1 == x2 or y1 == y2 end)
@@ -25,7 +34,13 @@ end
 
 defmodule Part2 do
   def run(rows) do
-
+    rows
+    |> Enum.map(&Part1.points_for_line/1)
+    |> List.flatten
+    |> Enum.frequencies
+    |> Enum.map(fn {p, freq} -> freq end)
+    |> Enum.filter(fn freq -> freq > 1 end)
+    |> Enum.count
   end
 
 end
@@ -51,6 +66,8 @@ defmodule Tests do
     assert Part1.points_for_line({{1, 1}, {1, 3}}) == [{1, 1}, {1, 2}, {1, 3}]
     assert Part1.points_for_line({{1, 3}, {1, 1}}) == [{1, 3}, {1, 2}, {1, 1}]
     assert Part1.points_for_line({{1, 1}, {3, 1}}) == [{1, 1}, {2, 1}, {3, 1}]
+    assert Part1.points_for_line({{1, 1}, {3, 3}}) == [{1, 1}, {2, 2}, {3, 3}]
+    assert Part1.points_for_line({{3, 3}, {1, 1}}) == [{1, 1}, {2, 2}, {3, 3}]
   end
 
   test "example" do
@@ -66,7 +83,7 @@ defmodule Tests do
       5,5 -> 8,2
       "
       assert 5 == input |> prepare |> Part1.run
-      # assert 5 == input |> prepare |> Part2.run
+      assert 12 == input |> prepare |> Part2.run
   end
 
   test "go time" do
@@ -570,6 +587,7 @@ defmodule Tests do
     645,240 -> 282,240
     475,54 -> 475,658
     972,610 -> 759,823"
-    assert 5 == input |> prepare |> Part1.run
+    assert 6007 == input |> prepare |> Part1.run
+    assert 6007 == input |> prepare |> Part2.run
   end
 end
