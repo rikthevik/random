@@ -1121,6 +1121,6 @@ defmodule Tests do
     000110000010
     000001101000"
     assert 2498354 == input |> prepare |> Part1.run
-    assert 2498354 == input |> prepare |> Part2.run
+    assert 3277956 == input |> prepare |> Part2.run
   end
 end
