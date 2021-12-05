@@ -26,7 +26,6 @@ defmodule Board do
       marked: MapSet.new,
       winscore: 0,
     }
-    |> IO.inspect
   end
 
   def call_number(b, number) do
@@ -35,7 +34,6 @@ defmodule Board do
         marked: MapSet.put(b.marked, Map.get(b.board, number))
       }
       if is_winner?(b) do
-        IO.puts ":WATASFDASDAS"
         %Board{b|
           winscore: Enum.sum(unmarked_numbers(b)) * number,
         }
@@ -50,19 +48,18 @@ defmodule Board do
 
 
   def is_winner?(b) do
+    # this logic feels hella clunky to me
     try do
       for i <- 0..4 do
         val = for j <- 0..4 do {i, j} end
         |> Enum.all?(fn coord -> MapSet.member?(b.marked, coord) end)
         if val do
-          IO.inspect(1)
           throw(:winner)
         end
 
         val = for j <- 0..4 do {j, i} end
         |> Enum.all?(fn coord -> MapSet.member?(b.marked, coord) end)
         if val do
-          IO.inspect(2)
           throw(:winner)
         end
       end
@@ -76,7 +73,6 @@ defmodule Board do
     b.board
     |> Enum.filter(fn {number, coord} -> not MapSet.member?(b.marked, coord) end)
     |> Enum.map(fn {number, coord} -> number end)
-    |> IO.inspect
   end
 
 end
@@ -101,9 +97,25 @@ defmodule Part1 do
 end
 
 defmodule Part2 do
-  def run(rows) do
+  def run({pulls, boards}) do
+    call_number(pulls, boards)
   end
 
+  def call_number([number|rest], boards) do
+    boards = boards
+    |> Enum.map(fn b -> Board.call_number(b, number) end)
+
+    # remove the boards that win
+    losers = boards
+    |> Enum.filter(fn b -> b.winscore == 0 end)
+
+    case losers do
+      [] ->
+        [last_winner] = boards
+        last_winner.winscore
+      _ -> call_number(rest, losers)
+    end
+  end
 end
 
 defmodule Tests do
@@ -177,7 +189,7 @@ defmodule Tests do
        2  0 12  3  7
       "
       assert 4512 == input |> prepare |> Part1.run
-      # assert 5 == input |> prepare |> Part2.run
+      assert 1924 == input |> prepare |> Part2.run
   end
 
   test "go time" do
@@ -782,6 +794,7 @@ defmodule Tests do
     84 46 72 81 16
     31 51 23 36 97
     80 43 75 99 79"
-    assert 4512 == input |> prepare |> Part1.run
+    assert 58374 == input |> prepare |> Part1.run
+    assert 11377 == input |> prepare |> Part2.run
   end
 end
