@@ -13,7 +13,6 @@ defmodule Part1 do
 
     defaults
     |> Map.merge(d)
-    |> IO.inspect
     |> step(steps)
     |> calc
   end
@@ -35,15 +34,14 @@ defmodule Part1 do
   end
 
   def calc(d) do
-    for {_, count} <- d do count end
+    d
+    |> Map.values
     |> Enum.sum
   end
 end
 
 defmodule Part2 do
-  def run(rows) do
-  end
-
+  
 end
 
 defmodule Tests do
