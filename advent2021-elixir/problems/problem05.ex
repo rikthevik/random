@@ -588,6 +588,6 @@ defmodule Tests do
     475,54 -> 475,658
     972,610 -> 759,823"
     assert 6007 == input |> prepare |> Part1.run
-    assert 6007 == input |> prepare |> Part2.run
+    assert 19349 == input |> prepare |> Part2.run
   end
 end
