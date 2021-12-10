@@ -49,30 +49,11 @@ defmodule Part2 do
     IO.puts "WAT"
     inputs |> IO.inspect
     eight = inputs |> Enum.find(fn s -> String.length(s) == 7 end)
-    m = Enum.zip(0..6, String.graphemes(eight)) |> Map.new
-    |> IO.inspect
+    seven = inputs |> Enum.find(fn s -> String.length(s) == 3 end)
+    one = inputs |> Enum.find(fn s -> String.length(s) == 2 end)
+    four = inputs |> Enum.find(fn s -> String.length(s) == 4 end)
 
-    index_groups = [
-      [0, 1, 2, 4, 5, 6],
-      [2, 5],
-      [0, 2, 3, 4, 6],
-      [0, 2, 3, 5, 6],
-      [1, 2, 3, 5],
-      [0, 1, 4, 5, 6],
-      [0, 1, 3, 4, 5, 6],
-      [0, 2, 5],
-      [0, 1, 2, 3, 4, 5, 6],
-      [0, 1, 2, 3, 5, 6],
-    ]
 
-    for {i, indexes} <- Enum.zip(0..10, index_groups) do
-      s = indexes
-      |> Enum.map(fn idx -> m[idx] end)
-      |> Enum.join
-      {s, i}
-    end
-    |> Map.new
-    |> IO.inspect
   end
 
 end
