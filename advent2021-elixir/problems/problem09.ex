@@ -24,9 +24,42 @@ defmodule Part1 do
     |> Grid.new
 
     grid.pointmap
-    |> Enum.filter(fn p -> is_low?(grid, p) end)
+    |> Enum.filter(fn {p, val} -> is_low?(grid, {p, val}) end)
     |> Enum.map(&risk_level/1)
     |> Enum.sum
+  end
+
+  def run2(rows) do
+    grid = rows
+    |> Grid.new
+
+    low_points = grid.pointmap
+    |> IO.inspect
+    |> Enum.filter(fn {p, val} -> is_low?(grid, {p, val}) end)
+    |> IO.inspect
+    |> Enum.map(fn {p, val} -> p end)
+    |> Enum.map(fn p -> expand_basins(grid, p) end)
+    |> IO.inspect
+    |> Enum.map(&Enum.count/1)
+    |> Enum.sort
+    |> Enum.reverse
+    |> Enum.slice(0..2)
+    |> Enum.reduce(1, fn a, acc -> a * acc end)
+
+  end
+
+  def expand_basins(grid, {x, y}) do
+    expand_basins(grid, {x, y}, MapSet.new([{x, y}]))
+  end
+  def expand_basins(grid, {x, y}, visited) do
+    adjacent_points({x, y})
+    |> Enum.filter(fn {adjx, adjy} ->
+      not MapSet.member?(visited, {adjx, adjy})
+      and 9 > height(grid, {adjx, adjy})
+      and height(grid, {x, y}) < height(grid, {adjx, adjy})
+    end)
+    |> Enum.map(fn {adjx, adjy} -> expand_basins(grid, {adjx, adjy}) end)
+    |> Enum.reduce(visited, &MapSet.union/2)
   end
 
   def is_low?(grid, {p, val}) do false
@@ -44,12 +77,8 @@ defmodule Part1 do
     ]
   end
 
-  def height(_, {-1, _}) do 1000 end
-  def height(_, {_, -1}) do 1000 end
-  def height(%{h: h}, {_, h}) do 1000 end
-  def height(%{w: w}, {w, _}) do 1000 end
   def height(grid, {x, y}) do
-    grid.pointmap[{x, y}]
+    Map.get(grid.pointmap, {x, y}, 9)
   end
 
   def risk_level({{_x, _y}, val}) do val+1 end
@@ -84,7 +113,7 @@ defmodule Tests do
       8767896789
       9899965678"
       assert 15 == input |> prepare |> Part1.run
-      # assert 5 == input |> prepare |> Part2.run
+      assert 1134 == input |> prepare |> Part1.run2
   end
 
   test "go time" do
@@ -188,6 +217,7 @@ defmodule Tests do
     9769432349767878974367895397654323456789326998752398765987599959897656598657234987654998654323478954
     8754321239879999865458943239765464567895445987631259854398910145789543498765345698769876543212356799
     9653210123989439876789432129896875689976556796532349876459321234895432349877456789878987643101234678"
-    assert 15 == input |> prepare |> Part1.run
+    assert 465 == input |> prepare |> Part1.run
+    assert 1134 == input |> prepare |> Part1.run2
   end
 end
