@@ -14,32 +14,63 @@ defmodule Part1 do
 
   def run2(rows) do
     rows
-    |> Enum.filter(fn s -> corrupted_score(s) > 0 end)
+    |> Enum.map(&incomplete_score/1)
     |> IO.inspect
+    |> Enum.filter(fn score -> score > 0 end)
+    |> Enum.sort
+    |> IO.inspect
+    |> middle_element
+
 
   end
+
+  def incomplete_score(s) do
+    case traverse(s, []) do
+      {:illegal, _} -> 0
+      {:incomplete, stack} ->
+        stack_score(stack)
+    end
+  end
+
+  def middle_element(l) do
+    midpoint = trunc(Enum.count(l) / 2)
+    Enum.at(l, midpoint)
+  end
+
+  def stack_score(stack) do
+    score = stack
+    |> Enum.reduce(0, fn c, acc -> acc * 5 + score2(c) end)
+
+    IO.inspect stack, label: "STACKCORE #{score}"
+    score
+  end
+
+  def score2("(") do 1 end
+  def score2("[") do 2 end
+  def score2("{") do 3 end
+  def score2("<") do 4 end
 
   def corrupted_score(s) do
     s
     |> IO.inspect
-    |> String.graphemes
     |> first_illegal_char
     |> IO.inspect(label: "#{s} WAT")
-    |> score
+    |> score1
   end
 
   def first_illegal_char(s) do
-    first_illegal_char(s, [])
+    case traverse(s, []) do
+      {:illegal, illegal_char} -> illegal_char
+      {:incomplete, stack} -> ""
+    end
   end
 
-  # incomplete?
-  def first_illegal_char([], _) do "" end
-
-  def first_illegal_char([c|rest], stack) when c in ["(", "[", "{", "<"] do
+  def traverse([], stack) do {:incomplete, stack} end
+  def traverse([c|rest], stack) when c in ["(", "[", "{", "<"] do
     # IO.puts "push #{c}"
-    first_illegal_char(rest, [c|stack])
+    traverse(rest, [c|stack])
   end
-  def first_illegal_char([close|rest], [open|stack]) when
+  def traverse([close|rest], [open|stack]) when
     (open == "(" and close == ")") or
     (open == "[" and close == "]") or
     (open == "{" and close == "}") or
@@ -47,17 +78,17 @@ defmodule Part1 do
   do
     # IO.puts "pop #{close}"
     # IO.inspect stack
-    first_illegal_char(rest, stack)
+    traverse(rest, stack)
   end
-  def first_illegal_char([close|rest], [open|stack]) do
-    close  # doesn't match open
+  def traverse([close|rest], [open|stack]) do
+    {:illegal, close}
   end
 
-  def score(")") do 3 end
-  def score("]") do 57 end
-  def score("}") do 1197 end
-  def score(">") do 25137 end
-  def score(_) do 0 end
+  def score1(")") do 3 end
+  def score1("]") do 57 end
+  def score1("}") do 1197 end
+  def score1(">") do 25137 end
+  def score1(_) do 0 end
 
 end
 
@@ -72,6 +103,7 @@ defmodule Tests do
 
   def prepare_row(s) do
     s
+    |> String.graphemes
   end
 
   def prepare(input) do
@@ -93,7 +125,7 @@ defmodule Tests do
       <{([([[(<>()){}]>(<<{{
       <{([{{}}[<[[[<>{}]]]>[]]"
       assert 26397 == input |> prepare |> Part1.run
-      assert 5 == input |> prepare |> Part1.run2
+      assert 288957 == input |> prepare |> Part1.run2
   end
 
   test "go time" do
@@ -192,5 +224,6 @@ defmodule Tests do
       [{[{[({<([{[({()<>}{{}{}})<<[]{}>>][({{}[]}[()[]])[({}{})<<>{}>]]}]{{{<([]())(<>[])><<[]()>({}{})>}}((<<(){}>
       (<(<{({{<{[{([{}()]{(){}})[[<>{}](<><>)]})(<[{{}()}]<[[][]]{()<>}>><{{[]<>}{<>()}}{<{}<>>[[]<>]}>)}>}[[<("
     assert 315693 == input |> prepare |> Part1.run
+    assert 1870887234 == input |> prepare |> Part1.run2
   end
 end
