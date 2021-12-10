@@ -24,7 +24,7 @@ defmodule Tests do
   def prepare(input) do
     input
     |> String.trim
-    |> String.split
+    |> String.split(~r/ *\n */)
     |> Enum.map(&Tests.prepare_row/1)
   end
 
