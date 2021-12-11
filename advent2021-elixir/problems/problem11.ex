@@ -47,10 +47,15 @@ end
 
 defmodule Part1 do
   def run(rows, steps_remaining) do
-    rows
-    |> Grid.new
-    |> Grid.draw
-    |> step(steps_remaining)
+    try do
+      rows
+      |> Grid.new
+      |> Grid.draw
+      |> step(steps_remaining)
+    catch
+      {:synchronized, step_count} ->
+        steps_remaining - step_count + 1
+    end
   end
 
   def step(g, steps_remaining) do
@@ -77,6 +82,10 @@ defmodule Part1 do
     flash_locations = g.pointmap
     |> Enum.filter(fn {p, v} -> v == "!" end)
     |> Enum.map(fn {p, v} -> p end)
+
+    if Enum.count(flash_locations) == Enum.count(g.pointmap) do
+      throw {:synchronized, steps_remaining}
+    end
 
     g2 = %Grid{g|
       pointmap: g.pointmap
@@ -139,7 +148,7 @@ end
       5283751526"
       assert 204 == input |> prepare |> Part1.run(10)
       assert 1656 == input |> prepare |> Part1.run(100)
-      # assert 5 == input |> prepare |> Part2.run
+      assert 195 == input |> prepare |> Part1.run(1000)
   end
 
   test "go time" do
@@ -153,6 +162,7 @@ end
     2115843171
     6182376282
     2384738675"
-    assert 1656 == input |> prepare |> Part1.run(100)
+    assert 1562 == input |> prepare |> Part1.run(100)
+    assert 268 == input |> prepare |> Part1.run(1000000)
   end
 end
