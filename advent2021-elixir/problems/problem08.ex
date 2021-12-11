@@ -23,13 +23,14 @@ end
 
 defmodule Part2 do
   def run(rows) do
+    # rows = [Enum.at(rows, 0)]
     for [inputs, outputs] <- rows do
       input_map = detect_inputs(inputs)
       outputs
-      |> IO.inspect
-      |> Enum.map(fn output -> input_map[output] end)
-      |> IO.inspect
+      |> Enum.map(&to_set/1)
+      |> Enum.map(fn output_set -> input_map[output_set] end)
       |> decode
+      |> IO.inspect
     end
     |> Enum.sum
   end
@@ -42,18 +43,52 @@ defmodule Part2 do
       digit * :math.pow(10, pow)
     end)
     |> Enum.sum
-    |> :math.floor
+    |> trunc
   end
 
   def detect_inputs(inputs) do
-    IO.puts "WAT"
-    inputs |> IO.inspect
-    eight = inputs |> Enum.find(fn s -> String.length(s) == 7 end)
-    seven = inputs |> Enum.find(fn s -> String.length(s) == 3 end)
-    one = inputs |> Enum.find(fn s -> String.length(s) == 2 end)
-    four = inputs |> Enum.find(fn s -> String.length(s) == 4 end)
+    sets = inputs
+    |> Enum.map(fn s -> MapSet.new(String.graphemes(s)) end)
 
+    eight = sets |> Enum.find(fn i -> Enum.count(i) == 7 end)
+    seven = sets |> Enum.find(fn i -> Enum.count(i) == 3 end)
+    one = sets |> Enum.find(fn i -> Enum.count(i) == 2 end)
+    four = sets |> Enum.find(fn i -> Enum.count(i) == 4 end)
+    five_counts = sets |> Enum.filter(fn i -> Enum.count(i) == 5 end)
+    six_counts = sets |> Enum.filter(fn i -> Enum.count(i) == 6 end)
 
+    # Just sorta had to work this out.
+    [top] = MapSet.difference(seven, one) |> MapSet.to_list
+    [mid] = Enum.reduce([four]++five_counts, &MapSet.intersection/2) |> MapSet.to_list
+    [topleft] = four |> MapSet.difference(MapSet.new([mid])) |> MapSet.difference(one) |> MapSet.to_list
+    [bot] = Enum.reduce(five_counts, &MapSet.intersection/2)
+    |> MapSet.difference(MapSet.new([top, mid]))
+    |> MapSet.to_list
+    [botright] = Enum.reduce(six_counts, &MapSet.intersection/2)
+    |> MapSet.difference(MapSet.new([top, topleft, bot]))
+    |> MapSet.to_list
+    [topright] = MapSet.difference(one, MapSet.new([botright])) |> MapSet.to_list
+    [botleft] = MapSet.difference(eight, MapSet.new([top, mid, topleft, bot, botright, topright])) |> MapSet.to_list
+
+    %{
+      MapSet.new([top, topleft, botleft, bot, botright, topright]) => 0,
+      one => 1,
+      MapSet.new([top, botleft, bot, mid, topright]) => 2,
+      MapSet.new([top, bot, botright, mid, topright]) => 3,
+      four => 4,
+      MapSet.new([top, topleft, bot, botright, mid]) => 5,
+      MapSet.new([top, topleft, botleft, bot, botright, mid]) => 6,
+      seven => 7,
+      eight => 8,
+      MapSet.new([top, topleft, mid, bot, botright, topright]) => 9,
+    }
+
+  end
+
+  def to_set(s) do
+    s
+    |> String.graphemes
+    |> MapSet.new
   end
 
 end
@@ -72,8 +107,12 @@ defmodule Tests do
     input
     |> String.trim
     |> String.split(~r/ *\n */)
-    |> IO.inspect
     |> Enum.map(&Tests.prepare_row/1)
+  end
+
+  test "pre-example" do
+    input = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"
+    assert 5353 == input |> prepare |> Part2.run
   end
 
   test "example" do
@@ -293,6 +332,6 @@ defmodule Tests do
     gebfd cfedga begfa dagbfc fgeadcb ecdgbf bced edfgc dgb db | dbec gadcfb db aefbg
     dbcg fbagc bcf bc cdaebgf aegbdf faecg fdcaeb cdafbg afbgd | adfbg fadebgc dgbafc febagd"
     assert 409 == input |> prepare |> Part1.run
-    # assert 335330 == input |> prepare |> Part2.run
+    assert 1024649 == input |> prepare |> Part2.run
   end
 end
