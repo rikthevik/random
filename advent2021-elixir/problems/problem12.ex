@@ -1,10 +1,17 @@
 
+defmodule Util do
+  def is_small?(s) do
+    Regex.match?(~r/^[a-z]+$/, s)
+  end
+end
+
 defmodule Path2 do
-  defstruct [:m, :two]
+  defstruct [:m, :two_small, :l]
   def new() do
     %Path2{
       m: Map.new,
-      two: false,
+      two_small: nil,
+      l: [],
     }
   end
 
@@ -12,8 +19,14 @@ defmodule Path2 do
     freq = Map.get(p.m, next, 0) + 1
     %Path2{
       m: Map.put(p.m, next, freq),
-      two: p.two and freq > 1,
+      two_small: if Util.is_small?(next) and freq > 1 do
+        next
+      else
+        p.two_small
+      end,
+      l: [next|p.l]
     }
+    |> IO.inspect
   end
 end
 
@@ -31,7 +44,7 @@ defmodule Part1 do
     |> traverse
   end
 
-  def is_lower?(s) do
+  def is_small?(s) do
     Regex.match?(~r/^[a-z]+$/, s)
   end
 
@@ -54,7 +67,7 @@ defmodule Part1 do
     nexts = edges
     |> Enum.filter(fn {from, to} -> from == curr end)
     |> Enum.map(fn {from, to} -> to end)
-    |> Enum.filter(fn n -> not is_lower?(n) or not Enum.member?(path, n) end)
+    |> Enum.filter(fn n -> not is_small?(n) or not Enum.member?(path, n) end)
     # |> IO.inspect(label: "next")
 
     for next <- nexts do
@@ -81,11 +94,9 @@ defmodule Part2 do
     |> Enum.count
   end
 
-  def is_lower?(s) do
-    Regex.match?(~r/^[a-z]+$/, s)
-  end
+
   def is_valid_next(n, path) do
-    not is_lower?(n) or not path.two
+    not Util.is_small?(n) or not path.m[n] < 1
   end
 
   def traverse(edges) do
@@ -141,7 +152,7 @@ defmodule Tests do
     b-d
     A-end
     b-end"
-    assert 10 == input |> prepare |> Part1.run
+    # assert 10 == input |> prepare |> Part1.run
     assert 36 == input |> prepare |> Part2.run
   end
 
@@ -157,7 +168,7 @@ defmodule Tests do
       kj-sa
       kj-HN
       kj-dc"
-      assert 19 == input |> prepare |> Part1.run
+      # assert 19 == input |> prepare |> Part1.run
       # assert 103 == input |> prepare |> Part2.run
   end
 
@@ -180,7 +191,7 @@ defmodule Tests do
     zg-he
     pj-fs
     start-RW"
-    assert 226 == input |> prepare |> Part1.run
+    # assert 226 == input |> prepare |> Part1.run
     # assert 3509 == input |> prepare |> Part2.run
   end
 
@@ -205,7 +216,7 @@ defmodule Tests do
     FN-sv
     FN-hi
     nx-end"
-    assert 5254 == input |> prepare |> Part1.run
+    # assert 5254 == input |> prepare |> Part1.run
     # assert 3509 == input |> prepare |> Part2.run
   end
 end
