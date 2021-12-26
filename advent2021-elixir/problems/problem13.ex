@@ -44,6 +44,21 @@ defmodule Part1 do
     |> Enum.count
   end
 
+  def run2({points, folds}) do
+    pmap = points
+    |> MapSet.new
+    # |> draw
+
+    IO.puts ""
+    do_fold(pmap, folds)
+    |> draw
+  end
+
+  def do_fold(pmap, []) do pmap end
+  def do_fold(pmap, [fold|folds]) do
+    do_fold(fold_over(pmap, fold), folds)
+  end
+
   def fold_over(pmap, {"y", foldy}) do
     above = Enum.filter(pmap, fn {_, y} -> y < foldy end)
     below = Enum.filter(pmap, fn {_, y} -> y > foldy end)
@@ -83,7 +98,7 @@ defmodule Tests do
 
   def prepare_point(s) do
     s
-    |> IO.inspect
+    # |> IO.inspect
     |> String.split(~r/,/)
     |> Enum.map(&String.to_integer/1)
     |> List.to_tuple
@@ -104,7 +119,7 @@ defmodule Tests do
       points |> Enum.map(&prepare_point/1),
       folds |> Enum.map(&prepare_fold/1),
     }
-    |> IO.inspect
+    # |> IO.inspect
 
   end
 
@@ -1073,5 +1088,6 @@ defmodule Tests do
     fold along y=13
     fold along y=6"
     assert 781 == input |> prepare |> Part1.run
+    assert 781 == input |> prepare |> Part1.run2
   end
 end
