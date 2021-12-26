@@ -3,11 +3,11 @@ defmodule Grid do
   def new(points) do
     for {y, cols} <- Enum.zip(0..10000, points) do
       for {x, val} <- Enum.zip(0..10000, cols) do
-        {{x, y}, val}
+        {x, y}
       end
     end
     |> List.flatten
-    |> Map.new
+    |> MapSet.new
   end
 
 end
@@ -18,11 +18,11 @@ end
 
 defmodule Part1 do
   def draw(pmap) do
-    {{max_x, _}, _} = Enum.max_by(pmap, fn {{x, _}, _} -> x end)
-    {{_, max_y}, _} = Enum.max_by(pmap, fn {{_, y}, _} -> y end)
+    {max_x, _} = Enum.max_by(pmap, fn {x, _} -> x end)
+    {_, max_y} = Enum.max_by(pmap, fn {_, y} -> y end)
     for y <- 0..max_y do
       for x <- 0..max_x do
-        IO.write(Map.get(pmap, {x, y}, "."))
+        IO.write(if MapSet.member?(pmap, {x, y}) do "#" else "." end)
       end
       IO.puts ""
     end
@@ -32,8 +32,7 @@ defmodule Part1 do
 
   def run({points, folds}) do
     pmap = points
-    |> Enum.map(fn {x, y} -> {{x, y}, "#"} end)
-    |> Map.new
+    |> MapSet.new
     |> draw
 
     IO.puts "hello"
@@ -41,19 +40,20 @@ defmodule Part1 do
     pmap
     |> fold_over(Enum.at(folds, 0))
     |> draw
+    |> Enum.count
   end
 
   def fold_over(pmap, {"y", foldy}) do
-    above = Enum.filter(pmap, fn {{_, y}, v} -> y < foldy end)
-    below = Enum.filter(pmap, fn {{_, y}, v} -> y > foldy end)
+    above = Enum.filter(pmap, fn {_, y} -> y < foldy end)
+    below = Enum.filter(pmap, fn {_, y} -> y > foldy end)
 
-    to_add = for {{x, y}, v} <- below do
-      {{x, 2 * foldy - y}, v}
+    to_add = for {x, y} <- below do
+      {x, 2 * foldy - y}
     end
 
     above
     |> Enum.concat(to_add)
-    |> Map.new
+    |> MapSet.new
   end
 
 end
