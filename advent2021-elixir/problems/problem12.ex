@@ -6,11 +6,10 @@ defmodule Util do
 end
 
 defmodule Path2 do
-  defstruct [:m, :two_small, :l]
+  defstruct [:m, :l]
   def new() do
     %Path2{
       m: Map.new,
-      two_small: nil,
       l: [],
     }
   end
@@ -18,15 +17,16 @@ defmodule Path2 do
   def add(p, next) do
     freq = Map.get(p.m, next, 0) + 1
     %Path2{
-      m: Map.put(p.m, next, freq),
-      two_small: if Util.is_small?(next) and freq > 1 do
-        next
-      else
-        p.two_small
-      end,
+      m: if Util.is_small?(next) do Map.put(p.m, next, freq) else p.m end,
       l: [next|p.l]
     }
-    |> IO.inspect
+  end
+
+  def is_valid_path?(p) do
+    retval = (Enum.count(p.m, fn {_, freq} -> freq == 2 end) <= 1
+      and Enum.count(p.m, fn {_, freq} -> freq > 2 end) == 0)
+    # IO.inspect(p, label: "is_valid_path? #{retval}")
+    retval
   end
 end
 
@@ -82,25 +82,29 @@ defmodule Part2 do
 
   def run(rows) do
     reversed_edges = rows
-    |> Enum.filter(fn {from, to} -> to != "end" and from != "start" end)
     |> Enum.map(fn {from, to} -> {to, from} end)
 
-    rows
+    paths = rows
     |> Enum.concat(reversed_edges)
+    |> Enum.filter(fn {from, to} -> from != "end" and to != "start" end)
+    # |> IO.inspect
     |> traverse
-    # |> IO.inspect
-    # |> Enum.filter(&is_valid_p2_path?/1)
-    # |> IO.inspect
+
+    # IO.puts "paths #{Enum.count(paths)}"
+
+    valid_paths = paths
+    |> Enum.filter(&Path2.is_valid_path?/1)
+    IO.puts "valid_paths #{Enum.count(valid_paths)}"
+
+    valid_paths
     |> Enum.count
   end
 
 
-  def is_valid_next(n, path) do
-    not Util.is_small?(n) or not path.m[n] < 1
-  end
 
   def traverse(edges) do
     traverse(edges, "start", Path2.new)
+    # |> IO.inspect
     |> List.flatten
     # |> Enum.sum
   end
@@ -111,17 +115,19 @@ defmodule Part2 do
   end
 
   def traverse(edges, curr, path) do
-    curr
-    # |> IO.inspect(label: "curr")
+    if not Path2.is_valid_path?(path) do
+      IO.puts "WAT"
+      IO.inspect path
+      throw :wat
+    end
 
     nexts = edges
     |> Enum.filter(fn {from, to} -> from == curr end)
     |> Enum.map(fn {from, to} -> to end)
-    |> Enum.filter(fn n -> is_valid_next(n, path) end)
-    # |> IO.inspect(label: "next")
+    |> Enum.filter(fn n -> (path |> Path2.add(n) |> Path2.is_valid_path?) end)
 
     for next <- nexts do
-      traverse(edges, next, Path2.add(path, curr))
+      traverse(edges, next, Path2.add(path, next))
     end
 
   end
@@ -152,7 +158,7 @@ defmodule Tests do
     b-d
     A-end
     b-end"
-    # assert 10 == input |> prepare |> Part1.run
+    assert 10 == input |> prepare |> Part1.run
     assert 36 == input |> prepare |> Part2.run
   end
 
@@ -168,8 +174,8 @@ defmodule Tests do
       kj-sa
       kj-HN
       kj-dc"
-      # assert 19 == input |> prepare |> Part1.run
-      # assert 103 == input |> prepare |> Part2.run
+      assert 19 == input |> prepare |> Part1.run
+      assert 103 == input |> prepare |> Part2.run
   end
 
   test "examples2" do
@@ -191,8 +197,8 @@ defmodule Tests do
     zg-he
     pj-fs
     start-RW"
-    # assert 226 == input |> prepare |> Part1.run
-    # assert 3509 == input |> prepare |> Part2.run
+    assert 226 == input |> prepare |> Part1.run
+    assert 3509 == input |> prepare |> Part2.run
   end
 
   test "go time" do
@@ -216,7 +222,7 @@ defmodule Tests do
     FN-sv
     FN-hi
     nx-end"
-    # assert 5254 == input |> prepare |> Part1.run
-    # assert 3509 == input |> prepare |> Part2.run
+    assert 5254 == input |> prepare |> Part1.run
+    assert 149385 == input |> prepare |> Part2.run
   end
 end
