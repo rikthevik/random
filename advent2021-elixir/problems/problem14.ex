@@ -11,30 +11,25 @@ defmodule Part1 do
     |> Enum.map(fn {mid, left, right} -> {{left, right}, mid} end)
     |> Map.new
 
-    outstr = perform_step(rmap, String.graphemes(instr), steps_to_run)
-    {{_, min_freq}, {_, max_freq}} = outstr
-    |> Enum.frequencies
+    out = perform_step(rmap, String.graphemes(instr), steps_to_run, %{})
+    {{_, min_freq}, {_, max_freq}} = out
     |> Enum.min_max_by(fn {_, freq} -> freq end)
 
     max_freq - min_freq
   end
 
-  def perform_step(rmap, instr, 0) do instr end
-  def perform_step(rmap, instr, steps_remaining) do
-    after_step = apply_rules(rmap, instr)
-    # after_step |> Enum.join("") |> IO.inspect
-    perform_step(rmap, after_step, steps_remaining-1)
+  def perform_step(_rmap, _s, 0, acc) do acc end
+  def perform_step(_rmap, [], _, acc) do acc end
+  def perform_step(rmap, [a, b|rest], steps_to_run, acc) do
+    newacc = acc
+    |> Map.put(a, 1+Map.get(acc, a, 0))
+
+    mid = Map.get(rmap, {a, b})
+    perform_step(rmap, [mid, b|rest], steps_to_run-1, newacc)
+
   end
 
-  def apply_rules(rmap, instr) do apply_rules(rmap, instr, []) end
-  def apply_rules(rmap, [a], acc) do Enum.reverse([a|acc]) end
-  def apply_rules(rmap, [a, b|rest], acc) do
-      newacc = case Map.get(rmap, {a, b}) do
-        nil -> [a|acc]
-        mid -> [mid, a|acc]  # don't forget about list reverse at the end
-      end
-      apply_rules(rmap, [b|rest], newacc)
-  end
+
 
 end
 
@@ -77,7 +72,6 @@ defmodule Tests do
     CC -> N
     CN -> C"
     assert 1588 == input |> prepare |> Part1.run("NNCB", 10)
-
   end
 
   test "go time" do
