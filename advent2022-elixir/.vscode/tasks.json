@@ -14,7 +14,8 @@
                 "panel": "dedicated",
                 "showReuseMessage": false,
                 "clear": true
-            }
+            },
+            "problemMatcher": []
         }
     ]
 }
