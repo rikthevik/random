@@ -203,6 +203,6 @@ defmodule Tests do
   test "go time2" do
     input = File.read!("./inputs/p7input.txt")
     IO.puts "\n"
-    assert 1667443 == input |> prepare |> Part1.run2
+    assert 8998590 == input |> prepare |> Part1.run2
   end
 end
