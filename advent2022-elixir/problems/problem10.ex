@@ -6,10 +6,10 @@ defmodule Prob do
   end
 
   def read(p, ["noop"]) do
-    %{p|t: p.t+1}
+    [%{p|t: p.t+1}]
   end
   def read(p, ["addx", x]) do
-    %{p|t: p.t+2, x: p.x+x}
+    [%{p|t: p.t+1}, %{p|t: p.t+2, x: p.x+x}]
   end
 
   def signal_strength(p) do
@@ -23,21 +23,24 @@ defmodule Prob do
 end
 
 defmodule Part1 do
+  def get_steps(rows) do
+    {steps, p} = rows
+    |> Enum.map_reduce(Prob.new(), fn row, p ->
+      ps = Prob.read(p, row)
+      {ps, List.last(ps)}
+    end)
+
+    steps = steps
+    |> List.flatten()
+  end
 
   def run(rows, cycle_list) do
-    {steps, p} = rows
-    |> IO.inspect()
-    |> Enum.map_reduce(Prob.new(), fn row, p ->
-      p2 = Prob.read(p, row)
-      {p2, p2}
-    end)
+    steps = get_steps(rows)
 
     cycle_list
     |> Enum.map(fn cycle ->
       p = steps
-      |> Enum.take_while(fn p -> p.t <= cycle end)
-      |> Enum.reverse()
-      |> List.first()
+      |> Enum.find(fn p -> p.t == cycle end)
       |> IO.inspect
 
       p.x * cycle
@@ -46,9 +49,36 @@ defmodule Part1 do
 end
 
 defmodule Part2 do
-  def run(rows) do
-    rows
+  def pixel(col, x) do
+    ret = pix(col, x)
+    # {col, x, ret} |> IO.inspect()
+    ret
   end
+  def pix(col, x) when col <= x+1 and col >= x-1 do "#" end
+  def pix(_, _) do "." end
+
+  def run(rows) do
+    w = 40
+    h = 6
+
+    step_map = Part1.get_steps(rows)
+    |> Enum.map(fn p -> {p.t, p.x} end)
+    |> Map.new()
+
+    IO.puts("wat")
+    for row <- 0..(h-1) do
+      for col <- 0..(w-1) do
+        t = row * w + col + 1
+        p = pixel(col, Map.get(step_map, t, 1))
+        IO.write(p)
+      end
+      IO.puts("")
+    end
+
+
+  end
+
+
 end
 
 defmodule Tests do
@@ -68,8 +98,9 @@ defmodule Tests do
   test "example" do
     input = "noop
     addx 3
-    addx -5"
-    assert [20, -7] == input |> prepare |> Part1.run([5, 7])
+    addx -5
+    noop"
+    # assert [20, -7] == input |> prepare |> Part1.run([5, 7])
     # assert 8 == input |> prepare |> Part2.run
   end
 
@@ -220,13 +251,14 @@ defmodule Tests do
     noop
     noop
     noop"
-    assert [420, 1140, 1800, 2940, 2880, 3960] == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220])
-    assert 13140 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
+    # assert [420, 1140, 1800, 2940, 2880, 3960] == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220])
+    # assert 13140 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
+    input |> prepare |> Part2.run()
   end
 
   test "go time" do
     input = File.read!("./inputs/p10input.txt")
-    # assert 15220 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
-    # assert 1805 == input |> prepare |> Part2.run
+    assert 15220 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
+    input |> prepare |> Part2.run()
   end
 end
