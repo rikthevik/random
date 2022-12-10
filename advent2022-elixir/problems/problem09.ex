@@ -1,8 +1,9 @@
 
 defmodule Prob do
-  defstruct [:hx, :hy, :tx, :ty, :tail_path]
-  def new() do
-    %Prob{hx: nil, hy: nil, tx: 0, ty: 0, tail_path: []}
+  defstruct [:knots, :tail_path]
+  def new(num_knots) do
+    knots = for _ <- 0..num_knots do {0, 0} end
+    %Prob{knots: knots, tail_path: [{0, 0}]}
   end
 
   def vec("U") do {0, +1} end
@@ -14,37 +15,27 @@ defmodule Prob do
   def sign(i) when i > 0 do +1 end
   def sign(_) do -1 end
 
-  def move(p=%{hx: nil, hy: nil}, dir) do
-    {dx, dy} = vec(dir)
-    %{p|hx: dx, hy: dy, tail_path: [{0, 0}]}
-  end
   def move(p, dir) do
-    p
-    |> move_head(dir)
-    |> snap_tail(dir)
-  end
-
-  def move_head(p, dir) do
-    {dhx, dhy} = vec(dir)
+    [{hx, hy}|rest] = p.knots
+    {dx, dy} = vec(dir)
+    new_knots = follow({hx+dx, hy+dy}, rest)
+    new_tail_spot = new_knots |> List.last()
     %{p|
-      hx: p.hx+dhx,
-      hy: p.hy+dhy,
+      knots: new_knots,
+      tail_path: [new_tail_spot|p.tail_path],
     }
   end
 
-  def snap_tail(p, dir) do
-    {dtx, dty} = p |> tail_vec(dir)
-    {tx, ty} = {p.tx+dtx, p.ty+dty}
-    %{p|
-      tx: tx,
-      ty: ty,
-      tail_path: [{tx, ty}|p.tail_path],
-    }
+  def follow(curr, []) do [curr] end
+  def follow(curr, [next|rest]) do
+    {dx, dy} = tail_vec(curr, next)
+    {nx, ny} = next
+    [curr] ++ follow({nx+dx, ny+dy}, rest)
   end
 
-  def tail_vec(p, dir) do
-    dx = p.hx - p.tx
-    dy = p.hy - p.ty
+  def tail_vec({hx, hy}, {tx, ty}) do
+    dx = hx - tx
+    dy = hy - ty
     {dx, dy} |> IO.inspect(label: "tail_vec dex")
     cond do
       abs(dx) == 2 ->
@@ -62,7 +53,8 @@ defmodule Prob do
 
 
   def tuple(p) do
-    {p.hx, p.hy, p.tx, p.ty}
+    [{hx, hy}, {tx, ty}] = p.knots
+    {hx, hy, tx, ty}
   end
 
 end
@@ -77,7 +69,7 @@ defmodule Part1 do
     |> Enum.map(&explode_row/1)
     |> Enum.concat()
     |> IO.inspect()
-    |> Enum.reduce(Prob.new(), fn dir, p -> Prob.move(p, dir) end)
+    |> Enum.reduce(Prob.new(1), fn dir, p -> Prob.move(p, dir) end)
 
     p.tail_path
     |> MapSet.new()
@@ -107,12 +99,12 @@ defmodule Tests do
   end
 
   test "tests" do
-    assert {0, +1, 0, 0} == Prob.new() |> Prob.move("U") |> Prob.tuple()
-    assert {0, +2, 0, +1} == Prob.new() |> Prob.move("U") |> Prob.move("U") |> Prob.tuple()
-    assert {0, -1, 0, 0} == Prob.new() |> Prob.move("D") |> Prob.tuple()
-    assert {-1, 0, 0, 0} == Prob.new() |> Prob.move("L") |> Prob.tuple()
-    assert {+1, 0, 0, 0} == Prob.new() |> Prob.move("R") |> Prob.tuple()
-    assert {+2, 0, +1, 0} == Prob.new() |> Prob.move("R") |> Prob.move("R") |> Prob.tuple()
+    assert {0, +1, 0, 0} == Prob.new(1) |> Prob.move("U") |> Prob.tuple()
+    assert {0, +2, 0, +1} == Prob.new(1) |> Prob.move("U") |> Prob.move("U") |> Prob.tuple()
+    assert {0, -1, 0, 0} == Prob.new(1) |> Prob.move("D") |> Prob.tuple()
+    assert {-1, 0, 0, 0} == Prob.new(1) |> Prob.move("L") |> Prob.tuple()
+    assert {+1, 0, 0, 0} == Prob.new(1) |> Prob.move("R") |> Prob.tuple()
+    assert {+2, 0, +1, 0} == Prob.new(1) |> Prob.move("R") |> Prob.move("R") |> Prob.tuple()
   end
 
   test "example" do
@@ -130,7 +122,7 @@ defmodule Tests do
 
   test "go time" do
     input = File.read!("./inputs/p9input.txt")
-    # assert 5735 == input |> prepare |> Part1.run
+    assert 5735 == input |> prepare |> Part1.run
     # assert 1805 == input |> prepare |> Part2.run
   end
 end
