@@ -226,7 +226,7 @@ defmodule Tests do
 
   test "go time" do
     input = File.read!("./inputs/p10input.txt")
-    assert 13140 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
+    # assert 15220 == input |> prepare |> Part1.run([20, 60, 100, 140, 180, 220]) |> Enum.sum()
     # assert 1805 == input |> prepare |> Part2.run
   end
 end
