@@ -4,9 +4,12 @@ defmodule Util do
 end
 
 defmodule Part1 do
-  def start_lr({l, r}) do
+  def compare({l, r}) do
     {l, r} |> IO.inspect(label: "start")
-    go(l, r)
+    case go(l, r) do
+      :correct -> true
+      :incorrect -> false
+    end
   end
 
   def go(l, r) do
@@ -38,15 +41,12 @@ defmodule Part1 do
     end
   end
 
-
-
-
   def run(rows) do
     rows
     |> IO.inspect()
-    |> Enum.map(&start_lr/1)
+    |> Enum.map(&compare/1)
     |> Enum.with_index()
-    |> Enum.filter(fn {result, idx} -> result == :correct end)
+    |> Enum.filter(fn {result, idx} -> result == true end)
     |> Enum.map(fn {_, idx} -> idx + 1 end)
     |> Enum.sum()
   end
@@ -54,8 +54,19 @@ end
 
 defmodule Part2 do
   def run(rows) do
-    rows
+    {d1, d2} = {[[2]], [[6]]}
+
+    sorted_packets = rows
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.concat()
+    |> Enum.concat([d1, d2])
+    |> Enum.sort(fn l, r -> Part1.compare({l, r}) end)
     |> IO.inspect()
+
+    d1_idx = Enum.find_index(sorted_packets, &(&1==d1))
+    d2_idx = Enum.find_index(sorted_packets, &(&1==d2))
+
+    (d1_idx+1) * (d2_idx+1)
   end
 
 end
@@ -107,13 +118,13 @@ defmodule Tests do
 
     [1,[2,[3,[4,[5,6,7]]]],8,9]
     [1,[2,[3,[4,[5,6,0]]]],8,9]"
-    assert 13 == input |> prepare |> Part1.run
-    # assert 5 == input |> prepare |> Part2.run
+    # assert 13 == input |> prepare |> Part1.run
+    assert 140 == input |> prepare |> Part2.run
   end
 
   test "go time" do
-    input = "122"
-    # assert 7 == input |> prepare |> Part1.run
-    # assert 7 == input |> prepare |> Part2.run
+    input = File.read!("./inputs/p13input.txt")
+    # assert 6395 == input |> prepare |> Part1.run
+    assert 7 == input |> prepare |> Part2.run
   end
 end
