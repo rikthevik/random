@@ -96,9 +96,8 @@ defmodule Prob do
     down_pairs = for row <- 0..(h_idx-1), col <- 0..w_idx do {{row, col}, {row+1, col}} end
     up_pairs = for {from, to} <- down_pairs do {to, from} end
 
-    g = Enum.concat([right_pairs, down_pairs, left_pairs, up_pairs])
+    Enum.concat([right_pairs, down_pairs, left_pairs, up_pairs])
     |> List.flatten()
-    # |> IO.inspect(label: "pairs")
     |> Enum.filter(fn {from, to} ->
       fromh = Map.get(height_map, from)
       toh = Map.get(height_map, to)
@@ -106,48 +105,21 @@ defmodule Prob do
       # {from, fromh, to, toh, "diff=", toh - fromh, ":", val} |> IO.inspect()
       val
     end)
-    |> Enum.sort()
-    |> Enum.group_by(fn {from, _} -> from end, fn {_, to} -> to end)
 
-    # g |> Enum.sort()
-    # |> IO.inspect(label: "foo")
-    g
   end
 
-  def naive(prob) do
-    min_path_length = find_paths(prob, prob.start, [])
-    |> Enum.filter(fn a -> a != nil end)
-    |> Enum.map(fn path -> path |> Tuple.to_list() |> length() end)
-    |> Enum.min()
-
-    min_path_length - 1  # path length to steps
-  end
-
-  def find_paths(prob, point, path) do
-    # [point, "path=", path, "next=", Map.get(prob.graph, point, [])] |> IO.inspect(label: "find_paths")
-    cond do
-      point == prob.goal ->
-        List.to_tuple([point|path])
-        # |> IO.inspect(label: "WIN")
-      Enum.member?(path, point) ->
-        # {point, path} |> IO.inspect(label: "revisit")
-        nil
-      true ->
-        for next_point <- Map.get(prob.graph, point, []) do
-          find_paths(prob, next_point, [point|path])
-        end
-        |> List.flatten()
-    end
-  end
 
   def dijkstras(prob) do
-    for from <- Map.keys(prob.graph) do
+    remaining = prob.graph
+    |> Enum.map(fn {k, _} -> k end)
+    |> MapSet.new()
+
+    for from <- remaining do
       Global.put({:dist, from}, 100000000)
       Global.put({:prev, from}, nil)
     end
     Global.put({:dist, prob.start}, 0)
 
-    remaining = MapSet.new(Map.keys(prob.graph))
     d_iter(prob, remaining)
   end
 
@@ -167,8 +139,12 @@ defmodule Prob do
       |> IO.inspect()
     else
       curr = Enum.min_by(remaining, &get_dist/1)
-      # |> IO.inspect(label: "curr")
-      for next <- Map.get(prob.graph, curr) do
+      |> IO.inspect(label: "curr")
+      neighbours = prob.graph
+      |> Enum.filter(fn {k, _} -> k == curr end)
+      |> Enum.map(fn {_, v} -> v end)
+
+      for next <- neighbours do
         alt = get_dist(curr) + 1 # constant cost
         if alt < get_dist(next) do
           Global.put({:dist, next}, alt)
@@ -195,8 +171,56 @@ end
 
 defmodule Part2 do
   def run(rows) do
-    rows
+    Global.start_link()
+    path = rows
+    |> Prob.new()
     |> IO.inspect()
+    |> Prob.dijkstras()
+
+    length(path) - 1  # steps
+  end
+
+  def dijkstras(prob) do
+    for from <- Map.keys(prob.graph) do
+      Global.put({:dist, from}, 100000000)
+      Global.put({:prev, from}, nil)
+    end
+    Global.put({:dist, prob.goal}, 0)
+
+    remaining = MapSet.new(Map.keys(prob.graph))
+    d_iter(prob, remaining)
+  end
+
+  def calc_path(prob) do
+    calc_path(prob, prob.goal, [])
+  end
+  def calc_path(prob, curr, path) do
+    if Map.get(prob.graph, curr) == 97 do
+      [curr|path]  # We're done at the first "a"
+    else
+      calc_path(prob, Global.get({:prev, curr}), [curr|path])
+    end
+  end
+
+  def get_dist(point) do Global.get({:dist, point}) end
+
+  def d_iter(prob, remaining) do
+    if MapSet.size(remaining) == 0 do
+      calc_path(prob)
+      |> IO.inspect()
+    else
+      curr = Enum.min_by(remaining, &get_dist/1)
+      |> IO.inspect(label: "curr")
+      for next <- Map.get(prob.graph, curr) do
+        alt = get_dist(curr) + 1 # constant cost
+        if alt < get_dist(next) do
+          Global.put({:dist, next}, alt)
+          Global.put({:prev, next}, curr)
+        end
+      end
+      # |> IO.inspect
+      d_iter(prob, MapSet.delete(remaining, curr))
+    end
   end
 
 end
@@ -222,12 +246,12 @@ defmodule Tests do
     acctuvwj
     abdefghi"
     assert 31 == input |> prepare |> Part1.run
-    # assert 5 == input |> prepare |> Part2.run
+    # assert 29 == input |> prepare |> Part2.run
   end
 
   test "go time" do
     input = File.read!("./inputs/p12input.txt")
-    assert 7 == input |> prepare |> Part1.run
+    # assert 7 == input |> prepare |> Part1.run
     # assert 7 == input |> prepare |> Part2.run
   end
 end
