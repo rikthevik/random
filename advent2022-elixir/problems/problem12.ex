@@ -1,4 +1,42 @@
 
+defmodule Global do
+  def start_link() do
+    {:ok, pid} = Task.start_link(fn -> loop(%{}) end)
+    Process.register(pid, :global)
+  end
+
+  defp loop(map) do
+    receive do
+      {:get, key, caller} ->
+        retval = Map.get(map, key)
+        # "GET F(#{inspect key}) => #{inspect retval}" |> IO.puts
+        send caller, retval
+        loop(map)
+      {:all, caller} ->
+        send caller, map
+        loop(map)
+      {:put, key, value} ->
+        # "SET F(#{inspect key}) := #{inspect value}" |> IO.puts
+        loop(Map.put(map, key, value))
+      {:reset} ->
+        loop(Map.new())
+    end
+  end
+
+  def put(k, v) do send :global, {:put, k, v} end
+  def get(k) do
+    send :global, {:get, k, self()}
+    receive do v -> v end
+  end
+  def all() do
+    send :global, {:all, self()}
+    receive do v -> v end
+  end
+  def reset() do
+    send :global, {:reset}
+  end
+end
+
 defmodule Util do
   def transpose(rows) do
     rows
@@ -60,24 +98,23 @@ defmodule Prob do
 
     g = Enum.concat([right_pairs, down_pairs, left_pairs, up_pairs])
     |> List.flatten()
-    |> IO.inspect(label: "pairs")
+    # |> IO.inspect(label: "pairs")
     |> Enum.filter(fn {from, to} ->
       fromh = Map.get(height_map, from)
       toh = Map.get(height_map, to)
       val = valid_edge?(fromh, toh)
-      {from, fromh, to, toh, "diff=", toh - fromh, ":", val} |> IO.inspect()
+      # {from, fromh, to, toh, "diff=", toh - fromh, ":", val} |> IO.inspect()
       val
     end)
     |> Enum.sort()
     |> Enum.group_by(fn {from, _} -> from end, fn {_, to} -> to end)
 
-    g |> Enum.sort()
-    |> IO.inspect(label: "foo")
-
+    # g |> Enum.sort()
+    # |> IO.inspect(label: "foo")
     g
   end
 
-  def begin(prob) do
+  def naive(prob) do
     min_path_length = find_paths(prob, prob.start, [])
     |> Enum.filter(fn a -> a != nil end)
     |> Enum.map(fn path -> path |> Tuple.to_list() |> length() end)
@@ -102,14 +139,57 @@ defmodule Prob do
         |> List.flatten()
     end
   end
+
+  def dijkstras(prob) do
+    for from <- Map.keys(prob.graph) do
+      Global.put({:dist, from}, 100000000)
+      Global.put({:prev, from}, nil)
+    end
+    Global.put({:dist, prob.start}, 0)
+
+    remaining = MapSet.new(Map.keys(prob.graph))
+    d_iter(prob, remaining)
+  end
+
+  def calc_path(prob) do
+    calc_path(prob, prob.goal, [])
+  end
+  def calc_path(%{start: start}, start, path) do [start|path] end
+  def calc_path(prob, curr, path) do
+    calc_path(prob, Global.get({:prev, curr}), [curr|path])
+  end
+
+  def get_dist(point) do Global.get({:dist, point}) end
+
+  def d_iter(prob, remaining) do
+    if MapSet.size(remaining) == 0 do
+      calc_path(prob)
+      |> IO.inspect()
+    else
+      curr = Enum.min_by(remaining, &get_dist/1)
+      # |> IO.inspect(label: "curr")
+      for next <- Map.get(prob.graph, curr) do
+        alt = get_dist(curr) + 1 # constant cost
+        if alt < get_dist(next) do
+          Global.put({:dist, next}, alt)
+          Global.put({:prev, next}, curr)
+        end
+      end
+      # |> IO.inspect
+      d_iter(prob, MapSet.delete(remaining, curr))
+    end
+  end
 end
 
 defmodule Part1 do
   def run(rows) do
-    rows
+    Global.start_link()
+    path = rows
     |> Prob.new()
     |> IO.inspect()
-    |> Prob.begin()
+    |> Prob.dijkstras()
+
+    length(path) - 1  # steps
   end
 end
 
