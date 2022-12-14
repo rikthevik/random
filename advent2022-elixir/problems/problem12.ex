@@ -47,7 +47,7 @@ defmodule Util do
 end
 
 defmodule Prob do
-  defstruct [:start, :goal, :graph]
+  defstruct [:start, :goal, :graph, :height_map]
 
   def height_for_char("S") do height_for_char("a") end
   def height_for_char("E") do height_for_char("z") end
@@ -63,7 +63,7 @@ defmodule Prob do
         {{row, col}, c}
       end
     end
-    |> IO.inspect(label: "grid_rows")
+    # |> IO.inspect(label: "grid_rows")
 
     w = lines |> List.first() |> String.graphemes() |> length()
     h = lines |> length()
@@ -71,18 +71,6 @@ defmodule Prob do
     {start, "S"} = grid_rows |> List.flatten() |> Enum.find(fn {_, c} -> c == "S" end)
     {goal, "E"} = grid_rows |> List.flatten() |> Enum.find(fn {_, c} -> c == "E" end)
 
-    %Prob{
-      start: start,
-      goal: goal,
-      graph: make_graph(grid_rows, w-1, h-1),
-    }
-  end
-
-  def valid_edge?(fromh, toh) when toh - fromh <= 1 do true end
-  def valid_edge?(_, _) do false end
-
-  def make_graph(grid_rows, w_idx, h_idx) do
-    # Take the rows and turn it into one-directional edges.
     height_map = grid_rows
     |> List.flatten()
     |> Enum.map(fn {p, char} -> {p, height_for_char(char)} end)
@@ -90,6 +78,20 @@ defmodule Prob do
     |> IO.inspect()
     |> Map.new()
     |> IO.inspect(label: "height_map")
+
+    %Prob{
+      start: start,
+      goal: goal,
+      graph: make_graph(height_map, w-1, h-1),
+      height_map: height_map,
+    }
+  end
+
+  def valid_edge?(fromh, toh) when toh - fromh <= 1 do true end
+  def valid_edge?(_, _) do false end
+
+  def make_graph(height_map, w_idx, h_idx) do
+    # Take the rows and turn it into one-directional edges.
 
     right_pairs = for row <- 0..h_idx, col <- 0..(w_idx-1) do {{row, col}, {row, col+1}} end
     left_pairs = for {from, to} <- right_pairs do {to, from} end
@@ -139,13 +141,14 @@ defmodule Prob do
       |> IO.inspect()
     else
       curr = Enum.min_by(remaining, &get_dist/1)
-      |> IO.inspect(label: "curr")
+      # |> IO.inspect(label: "curr")
+
       neighbours = prob.graph
       |> Enum.filter(fn {k, _} -> k == curr end)
       |> Enum.map(fn {_, v} -> v end)
 
       for next <- neighbours do
-        alt = get_dist(curr) + 1 # constant cost
+        alt = get_dist(curr) + 1  # constant cost
         if alt < get_dist(next) do
           Global.put({:dist, next}, alt)
           Global.put({:prev, next}, curr)
@@ -162,7 +165,7 @@ defmodule Part1 do
     Global.start_link()
     path = rows
     |> Prob.new()
-    |> IO.inspect()
+    # |> IO.inspect()
     |> Prob.dijkstras()
 
     length(path) - 1  # steps
@@ -172,50 +175,68 @@ end
 defmodule Part2 do
   def run(rows) do
     Global.start_link()
-    path = rows
+    prob = rows
     |> Prob.new()
-    |> IO.inspect()
-    |> Prob.dijkstras()
+    # |> IO.inspect()
+    |> dijkstras()
 
-    length(path) - 1  # steps
+    low_points = prob.height_map
+    |> Enum.filter(fn {p, h} -> h == 97 end)
+    |> Enum.map(fn {p, _} -> p end)
+
+    paths = low_points
+    |> Enum.map(fn p -> calc_path(p, prob.goal, []) end)
+    |> Enum.filter(fn a -> a != nil end)
+    |> Enum.map(fn path -> {length(path), path} end)
+    |> IO.inspect()
+
+    low_points
+    |> Enum.map(fn p -> Global.get({:dist, p}) end)
+    |> IO.inspect()
+    |> Enum.min()
+
   end
 
   def dijkstras(prob) do
-    for from <- Map.keys(prob.graph) do
-      Global.put({:dist, from}, 100000000)
-      Global.put({:prev, from}, nil)
-    end
+    remaining = prob.graph
+    |> Enum.map(fn {k, _} -> k end)
+    |> MapSet.new()
+
     Global.put({:dist, prob.goal}, 0)
 
-    remaining = MapSet.new(Map.keys(prob.graph))
     d_iter(prob, remaining)
   end
 
-  def calc_path(prob) do
-    calc_path(prob, prob.goal, [])
-  end
-  def calc_path(prob, curr, path) do
-    if Map.get(prob.graph, curr) == 97 do
-      [curr|path]  # We're done at the first "a"
-    else
-      calc_path(prob, Global.get({:prev, curr}), [curr|path])
-    end
+  def calc_path(target, target, path) do [target|path] end
+  def calc_path(target, nil, path) do nil end
+  def calc_path(target, curr, path) do
+    calc_path(target, Global.get({:prev, curr}), [curr|path])
   end
 
-  def get_dist(point) do Global.get({:dist, point}) end
+
+  def get_dist(point) do
+    v = Global.get({:dist, point})
+    if v == nil do 1000000 else v end
+  end
+  def get_prev(point) do Global.get({:prev, point}) end
 
   def d_iter(prob, remaining) do
     if MapSet.size(remaining) == 0 do
-      calc_path(prob)
-      |> IO.inspect()
+      prob
     else
       curr = Enum.min_by(remaining, &get_dist/1)
-      |> IO.inspect(label: "curr")
-      for next <- Map.get(prob.graph, curr) do
+      # |> IO.inspect(label: "curr")
+
+      # Go backwards
+      neighbours = prob.graph
+      |> Enum.filter(fn {_, v} -> v == curr end)
+      |> Enum.map(fn {k, _} -> k end)
+
+      for next <- neighbours do
         alt = get_dist(curr) + 1 # constant cost
         if alt < get_dist(next) do
           Global.put({:dist, next}, alt)
-          Global.put({:prev, next}, curr)
+          Global.put({:prev, curr}, next)
         end
       end
       # |> IO.inspect
@@ -245,13 +266,13 @@ defmodule Tests do
     accszExk
     acctuvwj
     abdefghi"
-    assert 31 == input |> prepare |> Part1.run
-    # assert 29 == input |> prepare |> Part2.run
+    # assert 31 == input |> prepare |> Part1.run
+    assert 29 == input |> prepare |> Part2.run
   end
 
   test "go time" do
     input = File.read!("./inputs/p12input.txt")
-    # assert 7 == input |> prepare |> Part1.run
-    # assert 7 == input |> prepare |> Part2.run
+    # assert 437 == input |> prepare |> Part1.run
+    assert 430 == input |> prepare |> Part2.run
   end
 end
