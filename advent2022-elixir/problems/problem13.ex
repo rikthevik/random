@@ -125,6 +125,6 @@ defmodule Tests do
   test "go time" do
     input = File.read!("./inputs/p13input.txt")
     # assert 6395 == input |> prepare |> Part1.run
-    assert 7 == input |> prepare |> Part2.run
+    assert 24921 == input |> prepare |> Part2.run
   end
 end
