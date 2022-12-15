@@ -55,9 +55,8 @@ defmodule Part1 do
 end
 
 defmodule Part2 do
-  def run(rows) do
-    rows
-    |> IO.inspect()
+  def run(sensors, wmax, hmax) do
+
   end
 
 end
@@ -66,13 +65,11 @@ defmodule Tests do
   use ExUnit.Case
 
   def prepare_row(s) do
-    s |> IO.inspect()
-
     [_match|captures] = ~r/Sensor at x=([-\d]+), y=([-\d]+): closest beacon is at x=([-\d]+), y=([-\d]+)/
     |> Regex.run(s)
 
     captures
-    |> IO.inspect()
+    # |> IO.inspect()
     |> Enum.map(&String.to_integer/1)
     |> Sensor.new()
   end
@@ -99,7 +96,8 @@ defmodule Tests do
     Sensor at x=16, y=7: closest beacon is at x=15, y=3
     Sensor at x=14, y=3: closest beacon is at x=15, y=3
     Sensor at x=20, y=1: closest beacon is at x=15, y=3"
-    assert 26 == input |> prepare |> Part1.run(10)
+    # assert 26 == input |> prepare |> Part1.run(10)
+    assert 56000011 == input |> prepare |> Part2.run(20, 20)
   end
 
   test "go time" do
@@ -138,7 +136,7 @@ defmodule Tests do
     Sensor at x=2950352, y=2883992: closest beacon is at x=2561642, y=2914773
     Sensor at x=3629602, y=3854760: closest beacon is at x=3516124, y=3802509
     Sensor at x=474030, y=3469506: closest beacon is at x=-452614, y=3558516"
-    assert 4560025 == input |> prepare |> Part1.run(2000000)
+    # assert 4560025 == input |> prepare |> Part1.run(2000000)
     # assert 7 == input |> prepare |> Part2.run
   end
 end
