@@ -85,9 +85,9 @@ end
 
 defmodule Part1 do
   def run(rows) do
-    prob = Prob.new(rows)
+    Prob.new(rows)
     |> Prob.set_abyss_height()
-    dropped = drop_until(prob, 0)
+    |> drop_until(0)
   end
   def drop_until(%{done: true}, count) do count - 1 end
   def drop_until(prob, count) do
@@ -99,7 +99,7 @@ defmodule Part2 do
   def run(rows) do
     prob = Prob.new(rows)
     |> Prob.set_floor()
-    dropped = drop_until(prob, 0) + 1
+    drop_until(prob, 0) + 1
   end
   def drop_until(%{done: true}, count) do count - 1 end
   def drop_until(prob, count) do
