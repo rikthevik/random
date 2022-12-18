@@ -21,6 +21,21 @@ defmodule Sensor do
     [{+sensor.rad, 0}, {-sensor.rad, 0}, {0, +sensor.rad}, {0, -sensor.rad}]
     |> Enum.map(&(Util.add(sensor.s, &1)))
   end
+  def edge_points(sensor) do
+    rad = sensor.rad + 1
+    {sx, sy} = sensor.s |> IO.inspect()
+    Enum.concat([
+      between(sensor, {-rad, 0}, {+1, +1}),
+      between(sensor, {0, +rad}, {+1, -1}),
+      between(sensor, {+rad, 0}, {-1, -1}),
+      between(sensor, {0, -rad}, {-1, +1}),
+    ])
+    |> Enum.map(fn {x, y} -> {x + sx, y + sy} end)
+  end
+  def between(sensor, {x, y}, {dx, dy}) do
+    for i <- 0..sensor.rad do {x + dx * i, y + dy * i} end
+  end
+
   def contains?(sensor, p) do
     Util.dist(sensor.s, p) <= sensor.rad
   end
@@ -56,6 +71,33 @@ end
 
 defmodule Part2 do
   def run(sensors, wmax, hmax) do
+    try do
+      all_points = sensors
+      # |> Enum.take(1)
+      |> Stream.map(&Sensor.edge_points/1)
+      |> Stream.concat()
+      |> Stream.filter(fn {x, y} -> 0 <= x and x <= wmax and 0 <= y and y <= hmax end)
+      # |> IO.inspect()
+
+      # 1=0
+      for {{x, y}, idx} <- Stream.with_index(all_points) do
+        if rem(idx, 1000) == 0 do
+          idx |> IO.inspect(label: "working")
+        end
+        contained_in_any = sensors
+          |> Stream.map(fn s -> Sensor.contains?(s, {x, y}) end)
+          |> Enum.any?()
+        # {{x, y}, contained_in_any} |> IO.inspect()
+        if not contained_in_any do
+          throw({x, y})
+        end
+      end
+    catch
+      {nx, ny} -> nx * 4_000_000 + ny
+    end
+  end
+
+  def naive(sensors, wmax, hmax) do
     try do
       for y <- 0..hmax do
         for x <- 0..wmax do
@@ -152,6 +194,6 @@ defmodule Tests do
     Sensor at x=3629602, y=3854760: closest beacon is at x=3516124, y=3802509
     Sensor at x=474030, y=3469506: closest beacon is at x=-452614, y=3558516"
     # assert 4560025 == input |> prepare |> Part1.run(2000000)
-    assert 7 == input |> prepare |> Part2.run(4000000, 4000000)
+    assert 12480406634249 == input |> prepare |> Part2.run(4000000, 4000000)
   end
 end
