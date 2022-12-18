@@ -56,7 +56,22 @@ end
 
 defmodule Part2 do
   def run(sensors, wmax, hmax) do
-
+    try do
+      for y <- 0..hmax do
+        for x <- 0..wmax do
+          contained_in_any = sensors
+            |> Stream.map(fn s -> Sensor.contains?(s, {x, y}) end)
+            |> Enum.any?()
+          case contained_in_any do
+            false -> throw({x, y})
+            contained_in_any -> contained_in_any
+          end
+        end
+        IO.puts(y)
+      end
+    catch
+      {nx, ny} -> nx * 4_000_000 + ny
+    end
   end
 
 end
@@ -97,7 +112,7 @@ defmodule Tests do
     Sensor at x=14, y=3: closest beacon is at x=15, y=3
     Sensor at x=20, y=1: closest beacon is at x=15, y=3"
     # assert 26 == input |> prepare |> Part1.run(10)
-    assert 56000011 == input |> prepare |> Part2.run(20, 20)
+    # assert 56000011 == input |> prepare |> Part2.run(20, 20)
   end
 
   test "go time" do
@@ -137,6 +152,6 @@ defmodule Tests do
     Sensor at x=3629602, y=3854760: closest beacon is at x=3516124, y=3802509
     Sensor at x=474030, y=3469506: closest beacon is at x=-452614, y=3558516"
     # assert 4560025 == input |> prepare |> Part1.run(2000000)
-    # assert 7 == input |> prepare |> Part2.run
+    assert 7 == input |> prepare |> Part2.run(4000000, 4000000)
   end
 end
