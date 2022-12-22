@@ -79,8 +79,8 @@ defmodule Tests do
   end
 
   test "go time" do
-    # input = "122"
-    # assert 7 == input |> prepare |> Part1.run
+    input = File.read!("./inputs/p21input.txt")
+    assert 7 == input |> prepare |> Part1.run
     # assert 7 == input |> prepare |> Part2.run
   end
 end
