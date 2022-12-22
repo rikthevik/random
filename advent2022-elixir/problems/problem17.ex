@@ -51,8 +51,11 @@ defmodule Prob do
     |> Enum.map(fn {_, y} -> y end)
     |> Enum.max()
 
+    new_grid = p.grid
+    |> MapSet.union(MapSet.new(rock))
+
     %{p|
-      grid: MapSet.union(p.grid, MapSet.new(rock)),
+      grid: new_grid,
       highest: max(p.highest, rock_highest),
       rockidx: p.rockidx + 1,
     }
@@ -119,12 +122,15 @@ defmodule Part1 do
   def run(rows) do
     rows
     |> Prob.new()
-    |> work(2022)
+    |> work(1000000000000)
 
   end
 
   def work(p, 0) do p.highest + 1 end
   def work(p, rocks_remaining) do
+    if rem(rocks_remaining, 10000) == 0 do
+      rocks_remaining |> IO.inspect(label: "rocks_remaining")
+    end
     work(Prob.next_rock(p), rocks_remaining-1)
   end
 end
@@ -161,7 +167,7 @@ defmodule Tests do
 
   test "go time" do
     input = File.read!("./inputs/p17input.txt")
-    assert 7 == input |> prepare |> Part1.run
+    assert 3197 == input |> prepare |> Part1.run
     # assert 7 == input |> prepare |> Part2.run
   end
 end
