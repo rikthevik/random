@@ -30,9 +30,10 @@ defmodule Prob do
 
   def equalize_inner("humn", eq) do eq end
   def equalize_inner({left, "/", rval}, eq) when is_integer(rval) do
+    # l / r = e, l = e * r
     equalize_inner(left, eq * rval)
   end
-  # Hmm, it doesn't test this case...
+  # Hmm, it doesn't use this case.  It seems right to me...
   # def equalize_inner({lval, "/", right}, eq) when is_integer(lval) do
   #   equalize_inner(right, div(lval, eq))
   # end
@@ -49,9 +50,11 @@ defmodule Prob do
     equalize_inner(right, div(eq, lval))
   end
   def equalize_inner({left, "-", rval}, eq) when is_integer(rval) do
+    # l - r = e, l = e + r
     equalize_inner(left, eq + rval)
   end
   def equalize_inner({lval, "-", right}, eq) when is_integer(lval) do
+    # l - r = e, r = e - l   # tricky case
     equalize_inner(right, lval - eq)
   end
 
@@ -59,6 +62,10 @@ end
 
 defmodule Part1 do
   def run(rows) do
+    # The first part is basically a tree traversal.  Rather than
+    # building a proper tree structure, the "tree" is just
+    # {from->to} pairs in a map.  I guess I could have folded that
+    # out into a recursive tree structure.
     rows
     |> Prob.new()
     |> Prob.traverse("root")
@@ -72,6 +79,13 @@ defmodule Part2 do
 
     {left, _op, right} = Map.get(p, "root")
 
+    # So the part 2 approach is to leave the half of the tree
+    # with "humn" in it unevaluated.  We'll have a single number
+    # on one side and huge tree on the other.  Then we can perform
+    # inverse operations on the number we're trying to equalize to.
+    # I feel like I could have returned a new tree of all inverse
+    # operations, but this works, it's not too crazy to read and
+    # it's fast.  Good enough for me.
     p
     |> Map.put("humn", "humn")
     |> Map.put("root", {left, "=", right})
