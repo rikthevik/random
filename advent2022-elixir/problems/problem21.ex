@@ -13,29 +13,71 @@ defmodule Prob do
     traverse_inner(p, Map.get(p, curr))
   end
   def traverse_inner(_p, num) when is_integer(num) do num end
+  def traverse_inner(_p, "humn") do "humn" end
   def traverse_inner(p, {left, op, right}) do
     perform_op(traverse(p, left), op, traverse(p, right))
   end
 
+  def perform_op(left, op, rval) when not is_integer(left) do {left, op, rval} end
+  def perform_op(lval, op, right) when not is_integer(right) do {lval, op, right} end
   def perform_op(lval, "+", rval) do lval + rval end
   def perform_op(lval, "-", rval) do lval - rval end
   def perform_op(lval, "*", rval) do lval * rval end
   def perform_op(lval, "/", rval) do div(lval, rval) end
+
+  def equalize({left, "=", num}) when is_integer(num) do equalize_inner(left, num) end
+  def equalize({num, "=", right}) when is_integer(num) do equalize_inner(right, num) end
+
+  def equalize_inner("humn", eq) do eq end
+  def equalize_inner({left, "/", rval}, eq) when is_integer(rval) do
+    equalize_inner(left, eq * rval)
+  end
+  # Hmm, it doesn't test this case...
+  # def equalize_inner({lval, "/", right}, eq) when is_integer(lval) do
+  #   equalize_inner(right, div(lval, eq))
+  # end
+  def equalize_inner({left, "+", rval}, eq) when is_integer(rval) do
+    equalize_inner(left, eq - rval)
+  end
+  def equalize_inner({lval, "+", right}, eq) when is_integer(lval) do
+    equalize_inner(right, eq - lval)
+  end
+  def equalize_inner({left, "*", rval}, eq) when is_integer(rval) do
+    equalize_inner(left, div(eq, rval))
+  end
+  def equalize_inner({lval, "*", right}, eq) when is_integer(lval) do
+    equalize_inner(right, div(eq, lval))
+  end
+  def equalize_inner({left, "-", rval}, eq) when is_integer(rval) do
+    equalize_inner(left, eq + rval)
+  end
+  def equalize_inner({lval, "-", right}, eq) when is_integer(lval) do
+    equalize_inner(right, lval - eq)
+  end
+
 end
 
 defmodule Part1 do
   def run(rows) do
     rows
     |> Prob.new()
-    |> IO.inspect()
     |> Prob.traverse("root")
   end
 end
 
 defmodule Part2 do
   def run(rows) do
-    rows
-    |> IO.inspect()
+    p = rows
+    |> Prob.new()
+
+    {left, _op, right} = Map.get(p, "root")
+
+    p
+    |> Map.put("humn", "humn")
+    |> Map.put("root", {left, "=", right})
+    |> Prob.traverse("root")
+    |> Prob.equalize()
+
   end
 
 end
@@ -75,12 +117,12 @@ defmodule Tests do
     drzm: hmdt - zczc
     hmdt: 32"
     assert 152 == input |> prepare |> Part1.run
-    # assert 5 == input |> prepare |> Part2.run
+    assert 301 == input |> prepare |> Part2.run
   end
 
   test "go time" do
     input = File.read!("./inputs/p21input.txt")
-    assert 7 == input |> prepare |> Part1.run
-    # assert 7 == input |> prepare |> Part2.run
+    assert 85616733059734 == input |> prepare |> Part1.run
+    assert 3560324848168 == input |> prepare |> Part2.run
   end
 end
