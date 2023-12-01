@@ -23,7 +23,8 @@ abcone2threexyz
 xtwone3four
 4nineeightseven2
 zoneight234
-7pqrstsixteen"""
+7pqrstsixteen
+"""
 
 proc find_digits_in_row(s: string): seq[int] =
   s
@@ -41,8 +42,6 @@ proc prob1(rows: seq[string]): int =
 
 
 let digit_conversions = {
-  "0": 0,
-  "zero": 0,
   "1": 1,
   "one": 1,
   "2": 2,
@@ -65,20 +64,21 @@ let digit_conversions = {
 
 
 proc inner_find_more_digits_in_row(s: string): seq[int] =
+  # recursive algorithm, look for matching characters and then keep going
   if s == "":
+    # base case, we're done
     return @[]
   else:
+    # we could write this as pattern matching in elixir
     for start, val in digit_conversions:
       if s.startsWith(start):
-        let remaining = s.substr(start.len())
+        # only hop forward one char, in case we get e.g eightwo, which should produce 8 and 2.
+        let remaining = s.substr(1)
         return @[val] & inner_find_more_digits_in_row(remaining)
     return inner_find_more_digits_in_row(s.substr(1))
 
 proc find_more_digits_in_row(s: string): seq[int] =
-  let r = inner_find_more_digits_in_row(s)
-  echo "find_more_digits " & s & " :: " & $r
-  return r
-
+  inner_find_more_digits_in_row(s)
 
 proc prob2(rows: seq[string]): int =
   rows
@@ -103,9 +103,8 @@ check 281 == test2_input
   .splitLines()
   .prob2()
 
-check 55929 == "./input/prob01.txt"
+check 55902 == "./input/prob01.txt"
   .readFile()
   .strip()
-  .inspect()
   .splitLines()
   .prob2()
