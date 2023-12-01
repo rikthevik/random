@@ -1,10 +1,23 @@
 
 import std/strutils
+import std/sequtils
+import unittest
 
-echo "hellllllo"
+func sum(s: seq[int]): int =
+  s.foldl(a + b)
 
-func prob1(rows): int =
-  return 123
+proc prob1_imperative(rows: seq[string]): int =
+  # Writing this in a (highly coupled) imperative style.
+  var acc = newSeq[string]()
+  var maxval = -1
+  for row in rows:
+    if row == "":
+      maxval = max(maxval, sum(map(acc, parseInt)))
+      acc.setLen(0)
+    else:
+      acc.add(row)
+  maxval    
+  
 
 let test1_input = """
 1000
@@ -23,4 +36,5 @@ let test1_input = """
 10000
 """
 
-assert 24000 == prob1()
+check 24000 == prob1_imperative(splitLines(test1_input))
+# check 24000 == prob1_functional(splitLines(test1_input))
