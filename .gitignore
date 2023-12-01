@@ -2,3 +2,4 @@ _build
 foo
 out
 .elixir_ls
+*.dSYM
