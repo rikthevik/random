@@ -16,9 +16,8 @@ proc prob1_imperative(rows: seq[string]): int =
       acc.setLen(0)
     else:
       acc.add(row)
-  maxval    
+  maxval
   
-
 let test1_input = """
 1000
 2000
@@ -37,4 +36,4 @@ let test1_input = """
 """
 
 check 24000 == prob1_imperative(splitLines(test1_input))
-# check 24000 == prob1_functional(splitLines(test1_input))
+check 69177 == prob1_imperative(splitLines(readFile("./inputs/prob01.txt")))
