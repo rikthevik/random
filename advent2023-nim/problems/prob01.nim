@@ -75,6 +75,7 @@ proc inner_find_more_digits_in_row(s: string): seq[int] =
         # only hop forward one char, in case we get e.g eightwo, which should produce 8 and 2.
         let remaining = s.substr(1)
         return @[val] & inner_find_more_digits_in_row(remaining)
+    # didn't find anything, discard the first character and keep going
     return inner_find_more_digits_in_row(s.substr(1))
 
 proc find_more_digits_in_row(s: string): seq[int] =
