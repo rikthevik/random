@@ -9,7 +9,7 @@
       "request": "launch",
       "name": "Debug",
       "program": "nim",
-      "args": ["compile", "--run", "${file}"],
+      "args": ["compile", "--run", "--debuginfo:on", "--stackTrace:on", "--lineTrace:on", "${file}"],
       "cwd": "${workspaceFolder}"
     }
   ]
