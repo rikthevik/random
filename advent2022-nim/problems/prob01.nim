@@ -6,16 +6,6 @@ import unittest
 func sum(s: seq[int]): int =
   s.foldl(a + b)
 
-# Thought for later
-# iterator splitWhile[T](items: seq[T], predicate: proc(a: T): bool): seq[seq[T]] =
-#   var acc = newSeq[T]()
-#   for item in items:
-#     if predicate(item):
-#       acc.add(item)
-#     else:
-#       yield acc
-#       acc.setLen(0)
-
 proc prob1_imperative(rows: seq[string]): int =
   # Writing this in a (highly coupled) imperative style.
   var acc = newSeq[string]()
@@ -59,8 +49,26 @@ let test1_input = """
 10000
 """
 
-check 24000 == prob1_imperative(splitLines(test1_input))
-check 69177 == prob1_imperative(splitLines(readFile("./inputs/prob01.txt")))
+check 24000 == test1_input
+  .splitLines()
+  .prob1_imperative()
+check 69177 == readFile("./inputs/prob01.txt")
+  .splitLines()
+  .prob1_imperative()
 
-check 45000 == prob2_imperative(splitLines(test1_input))
-check 207456 == prob2_imperative(splitLines(readFile("./inputs/prob01.txt")))
+check 45000 == test1_input
+  .splitLines()
+  .prob2_imperative()
+check 207456 == readFile("./inputs/prob01.txt")
+  .splitLines()
+  .prob2_imperative()
+
+# Thought for later
+# iterator splitWhile[T](items: seq[T], predicate: proc(a: T): bool): seq[seq[T]] =
+#   var acc = newSeq[T]()
+#   for item in items:
+#     if predicate(item):
+#       acc.add(item)
+#     else:
+#       yield acc
+#       acc.setLen(0)
