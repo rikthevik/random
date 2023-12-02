@@ -6,6 +6,7 @@ import std/sugar
 import unittest
 import eLib
 import std/tables
+import std/nre
 
 echo "--------------------------------"
 
@@ -22,19 +23,55 @@ let test2_input = """
 
 """
 
+type
+  Game = object
+    num: int
+    rounds: seq[Round]
+  Round = object
+    r: int
+    g: int
+    b: int
+
+proc parse_round(s: string): Round =
+  var t = initTable[string, int]()
+  for num_color in s.split(", "):
+    let bits = num_color.split(" ") 
+    t[bits[1]] = bits[0].parseInt()
+  Round(
+    r: t.getOrDefault("red", 0),
+    g: t.getOrDefault("green", 0),
+    b: t.getOrDefault("blue", 0)
+  )
+
+proc parse_game(s: string): Game =
+  let halves = s.split(": ", maxsplit=1)
+  return Game(
+    num: halves[0].substr(5).parseInt(),
+    rounds: halves[1].split("; ").map(parse_round)
+  )
+
+proc is_prob1_valid_round(r: Round): bool =
+  r.r <= 12 and r.g <= 13 and r.b <= 14
+
+proc is_prob1_valid_game(g: Game): bool =
+  g.rounds.all(is_prob1_valid_round)
+
 
 proc prob1(rows: seq[string]): int =
   rows
-    .len()
+    .map(parse_game)
+    .filter(is_prob1_valid_game)
+    .mapIt(it.num)
+    .sum()
 
 check 8 == test_input
   .strip()
   .splitLines()
   .prob1()
 
-# check 56465 == "./input/prob01.txt"
-#   .readFile()
-#   .strip()
-#   .splitLines()
-#   .prob1()
+check 2505 == "./input/prob02.txt"
+  .readFile()
+  .strip()
+  .splitLines()
+  .prob1()
 
