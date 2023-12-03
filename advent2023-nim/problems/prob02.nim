@@ -92,3 +92,10 @@ check 2286 == test_input
   .splitLines()
   .prob2()
 
+check 2505 == "./input/prob02.txt"
+  .readFile()
+  .strip()
+  .splitLines()
+  .prob2()
+
+
