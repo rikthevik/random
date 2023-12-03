@@ -34,6 +34,7 @@ type
 
 proc parse_round(s: string): Round =
   var t = initTable[string, int]()
+  # some way to zip this into a table in one line?
   for num_color in s.split(", "):
     let bits = num_color.split(" ") 
     t[bits[1]] = bits[0].parseInt()
@@ -56,12 +57,23 @@ proc is_prob1_valid_round(r: Round): bool =
 proc is_prob1_valid_game(g: Game): bool =
   g.rounds.all(is_prob1_valid_round)
 
-
 proc prob1(rows: seq[string]): int =
   rows
     .map(parse_game)
     .filter(is_prob1_valid_game)
-    .mapIt(it.num)
+    .map(g => g.num)
+    .sum()
+
+proc prob2_sub(game: Game): int =
+  let r = game.rounds.map(r => r.r).filter(i => i > 0).max()
+  let g = game.rounds.map(r => r.g).filter(i => i > 0).max()
+  let b = game.rounds.map(r => r.b).filter(i => i > 0).max()
+  return (r * g * b)
+    
+proc prob2(rows: seq[string]): int =
+  rows
+    .map(parse_game)
+    .map(prob2_sub)
     .sum()
 
 check 8 == test_input
@@ -74,4 +86,9 @@ check 2505 == "./input/prob02.txt"
   .strip()
   .splitLines()
   .prob1()
+
+check 2286 == test_input
+  .strip()
+  .splitLines()
+  .prob2()
 
