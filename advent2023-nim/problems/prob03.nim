@@ -121,12 +121,20 @@ proc prob1(rows: seq[string]): int =
     .sum()
 
 proc prob2(rows: seq[string]): int =
-  # rows
-  #   .load_grid()
-  #   .find_numbers()
-  #   .inspect()
-    # .sum()
-  42
+  let grid = rows
+    .load_grid()
+
+  let number_map = grid
+    .find_numbers()
+
+  return grid.data
+    .pairs()
+    .toSeq()
+    .filter(kv => kv[1] == '*')
+    .map(kv => adjacent_numbers(number_map, kv[0]))
+    .filter(nums => nums.len() == 2)
+    .map(nums => nums[0] * nums[1])
+    .sum()
 
 check 4361 == test_input
   .strip()
@@ -139,15 +147,15 @@ check 536202 == "./input/prob03.txt"
   .splitLines()
   .prob1()
 
-# check 2286 == test_input
-#   .strip()
-#   .splitLines()
-#   .prob2()
+check 467835 == test_input
+  .strip()
+  .splitLines()
+  .prob2()
 
-# check 2505 == "./input/prob02.txt"
-#   .readFile()
-#   .strip()
-#   .splitLines()
-#   .prob2()
+check 78272573 == "./input/prob03.txt"
+  .readFile()
+  .strip()
+  .splitLines()
+  .prob2()
 
 
