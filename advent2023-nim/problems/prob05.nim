@@ -49,57 +49,69 @@ humidity-to-location map:
 56 93 4"""
 
 type
-  Row = object
-    pass
+  Range = object
+    dst: int
+    src: int
+    len: int
+  Prob = object
+    seeds: seq[int]
+    maps: TableRef[string, seq[Range]]
 
+proc load_range(s: string): Range =
+  let ints = s.split(" ").map(i => i.parseInt())
+  Range(dst: ints[0], src: ints[1], len: ints[2])
 
-proc parse_row(row: string): Row =
-  let bits = row.split(re" *[:|] *")
-  return Row(
-    wins: bits[1].parse_ints(),
-    haves: bits[2].parse_ints(),
-  )
+proc load_prob(rows: seq[string]): Prob =
+  let row_chunks = split_rows_on_empty(rows)
+  let seeds = parse_ints(row_chunks[0][0].split(re": ")[1])
+  var maps = newTable[string, seq[Range]]()
+  for chunk in row_chunks[1..^1]:
+    let name = chunk[0].split(re" ")[0]
+    let ranges = chunk[1..^1].map(load_range)
+    maps[name] = ranges
+  return Prob(seeds: seeds, maps: maps)
+
+proc next_val(val: int, ranges: seq[Range]): int =
+  for r in ranges:
+    if val >= r.src and (val - r.src) < r.len:
+      return r.dst + (val - r.src)
+  return val
 
 proc prob1(rows: seq[string]): int =
-  return rows
-    .map(parse_row)
-    .map(matches_for_row)
-    .map(score_for_matches)
-    .inspect()
-    .sum()
-
+  let prob = load_prob(rows).inspect()
+  let map_keys = @["seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water", "water-to-light", "light-to-temperature", "temperature-to-humidity", "humidity-to-location"]
+  var locations = collect(newSeq):
+    for seed in prob.seeds:
+      var val = seed
+      for map_key in map_keys:
+        val = next_val(val, prob.maps[map_key])
+        echo "after " & map_key & " val => " & $val
+      val
+  return locations.min()
+    
 proc prob2(str_rows: seq[string]): int =
-  let rows = str_rows.map(parse_row)
-  var cards_per = collect(newSeq): (for r in rows: 1)
-  echo ""
-  echo $cards_per
-  for i in 0..<rows.len():
-    for w in 1..matches_for_row(rows[i]):
-      cards_per[i+w] += cards_per[i]
-    echo $cards_per
-  return cards_per.sum()
+  42
 
-check 13 == test_input
+check 35 == test_input
   .strip()
   .splitLines()
-  .inspect()
   .prob1()
 
-check 26426 == "./input/prob05.txt"
+check 484023871 == "./input/prob05.txt"
   .readFile()
   .strip()
   .splitLines()
   .prob1()
 
-check 30 == test_input
-  .strip()
-  .splitLines()
-  .prob2()
+# check 30 == test_input
+#   .strip()
+#   .splitLines()
+#   .prob2()
 
-check 6227972 == "./input/prob05.txt"
-  .readFile()
-  .strip()
-  .splitLines()
-  .prob2()
+# check 6227972 == "./input/prob05.txt"
+#   .readFile()
+#   .strip()
+#   .splitLines()
+#   .prob2()
 
 
