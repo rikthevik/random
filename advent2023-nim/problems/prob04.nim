@@ -58,27 +58,38 @@ proc prob1(rows: seq[string]): int =
     .inspect()
     .sum()
 
+proc prob2(str_rows: seq[string]): int =
+  let rows = str_rows.map(parse_row)
+  var cards_per = collect(newSeq): (for r in rows: 1)
+  echo ""
+  echo $cards_per
+  for i in 0..<rows.len():
+    for w in 1..matches_for_row(rows[i]):
+      cards_per[i+w] += cards_per[i]
+    echo $cards_per
+  return cards_per.sum()
+
 check 13 == test_input
   .strip()
   .splitLines()
   .inspect()
   .prob1()
 
-check 536202 == "./input/prob04.txt"
+check 26426 == "./input/prob04.txt"
   .readFile()
   .strip()
   .splitLines()
   .prob1()
 
-# check 467835 == test_input
-#   .strip()
-#   .splitLines()
-#   .prob2()
+check 30 == test_input
+  .strip()
+  .splitLines()
+  .prob2()
 
-# check 78272573 == "./input/prob04.txt"
-#   .readFile()
-#   .strip()
-#   .splitLines()
-#   .prob2()
+check 6227972 == "./input/prob04.txt"
+  .readFile()
+  .strip()
+  .splitLines()
+  .prob2()
 
 
