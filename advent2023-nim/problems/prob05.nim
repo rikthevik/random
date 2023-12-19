@@ -53,13 +53,14 @@ type
     dst: int
     src: int
     len: int
+    diff: int
   Prob = object
     seeds: seq[int]
     maps: TableRef[string, seq[Range]]
 
 proc load_range(s: string): Range =
   let ints = s.split(" ").map(i => i.parseInt())
-  Range(dst: ints[0], src: ints[1], len: ints[2])
+  Range(dst: ints[0], src: ints[1], len: ints[2], diff: ints[0] - ints[1])
 
 proc load_prob(rows: seq[string]): Prob =
   let row_chunks = split_rows_on_empty(rows)
@@ -74,23 +75,43 @@ proc load_prob(rows: seq[string]): Prob =
 proc next_val(val: int, ranges: seq[Range]): int =
   for r in ranges:
     if val >= r.src and (val - r.src) < r.len:
-      return r.dst + (val - r.src)
+      return val + r.diff
   return val
+
+let map_keys = @["seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water", "water-to-light", "light-to-temperature", "temperature-to-humidity", "humidity-to-location"]
 
 proc prob1(rows: seq[string]): int =
   let prob = load_prob(rows).inspect()
-  let map_keys = @["seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water", "water-to-light", "light-to-temperature", "temperature-to-humidity", "humidity-to-location"]
   var locations = collect(newSeq):
     for seed in prob.seeds:
       var val = seed
       for map_key in map_keys:
         val = next_val(val, prob.maps[map_key])
-        echo "after " & map_key & " val => " & $val
+        # echo "after " & map_key & " val => " & $val
       val
   return locations.min()
     
-proc prob2(str_rows: seq[string]): int =
-  42
+proc find_seed_pairs(l: seq[int]): seq[(int, int)] =
+  var s = newSeq[(int, int)]()
+  var i = 0
+  while i < l.len():
+    s.add((l[i], l[i+1]))
+    i += 2
+  return s
+
+proc prob2(rows: seq[string]): int =
+  # naive solution to start
+  let prob = load_prob(rows).inspect()
+  var minval = high(int)
+  for (seedmin, seedlen) in find_seed_pairs(prob.seeds).inspect():
+    for seed in seedmin..(seedmin+seedlen-1):
+      var val = seed
+      for map_key in map_keys:
+        val = next_val(val, prob.maps[map_key])
+        # echo "after " & map_key & " val => " & $val
+      minval = min(minval, val)
+  return minval
+  
 
 check 35 == test_input
   .strip()
@@ -103,12 +124,12 @@ check 484023871 == "./input/prob05.txt"
   .splitLines()
   .prob1()
 
-# check 30 == test_input
-#   .strip()
-#   .splitLines()
-#   .prob2()
+check 46 == test_input
+  .strip()
+  .splitLines()
+  .prob2()
 
-# check 6227972 == "./input/prob05.txt"
+# check 123 == "./input/prob05.txt"
 #   .readFile()
 #   .strip()
 #   .splitLines()
