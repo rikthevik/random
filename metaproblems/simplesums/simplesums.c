@@ -33,7 +33,7 @@ int main() {
 
   // Add the two integers a and b and print the resulting sum to the user
   int sum = a + b;
-  printf("\nThe sum is %u\n\n", sum);
+  printf("\nThe sum is %d\n\n", sum);
 
   // Check if the sum equals -1337 and give the flag if it does
   if (sum == -1337) {
