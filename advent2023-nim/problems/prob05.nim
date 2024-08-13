@@ -57,6 +57,11 @@ type
   Prob = object
     seeds: seq[int]
     maps: TableRef[string, seq[Range]]
+  Interval = object
+    lo: int
+    hi: int
+
+proc `<`(a: Range, b: Range): bool = a.src < b.src
 
 proc load_range(s: string): Range =
   let ints = s.split(" ").map(i => i.parseInt())
@@ -68,7 +73,8 @@ proc load_prob(rows: seq[string]): Prob =
   var maps = newTable[string, seq[Range]]()
   for chunk in row_chunks[1..^1]:
     let name = chunk[0].split(re" ")[0]
-    let ranges = chunk[1..^1].map(load_range)
+    var ranges = chunk[1..^1].map(load_range)
+    ranges.sort()
     maps[name] = ranges
   return Prob(seeds: seeds, maps: maps)
 
@@ -104,6 +110,7 @@ proc prob2(rows: seq[string]): int =
   let prob = load_prob(rows).inspect()
   var minval = high(int)
   for (seedmin, seedlen) in find_seed_pairs(prob.seeds).inspect():
+    echo "!!!", $seedmin, " + ", $seedlen
     for seed in seedmin..(seedmin+seedlen-1):
       var val = seed
       for map_key in map_keys:
@@ -112,22 +119,57 @@ proc prob2(rows: seq[string]): int =
       minval = min(minval, val)
   return minval
   
+# proc intervals_for_range(i: Interval, r: Range): seq[Interval] =
+#   if i.lo < r.src and i.hi > r.src:
+#     return @[Interval[lo:r.dst, ]]
 
-check 35 == test_input
-  .strip()
-  .splitLines()
-  .prob1()
 
-check 484023871 == "./input/prob05.txt"
-  .readFile()
-  .strip()
-  .splitLines()
-  .prob1()
+proc follow_interval(inter: Interval, ranges: seq[Range]): seq[Interval] =
+  var result = newSeq[Interval]()
+  for r in ranges:
+
+    result.add(Interval(
+      lo: r.dst,
+      hi: r.dst+r.len,
+    ))
+  echo "FOLLOW " & $inter & " => " & $result
+  return result
+
+proc prob2_smart(rows: seq[string]): int =
+  let prob = load_prob(rows).inspect()
+  var minval = high(int)
+  for (seedmin, seedlen) in find_seed_pairs(prob.seeds).inspect():
+    echo "!!!", $seedmin, " + ", $seedlen
+    var intervals = newSeq[Interval]()
+    intervals.add(Interval(lo: seedmin, hi: seedmin+seedlen))
+    for map_key in map_keys:
+      echo "map_key " & map_key
+      var new_intervals = newSeq[Interval]()
+      for interval in intervals:
+        new_intervals.add(follow_interval(interval, prob.maps[map_key]))
+        break
+      # echo "after " & map_key & " val => " & $val
+      intervals = new_intervals
+    # minval = min(minval, val)
+    break
+  return minval  
+
+
+# check 35 == test_input
+#   .strip()
+#   .splitLines()
+#   .prob1()
+
+# check 484023871 == "./input/prob05.txt"
+#   .readFile()
+#   .strip()
+#   .splitLines()
+#   .prob1()
 
 check 46 == test_input
   .strip()
   .splitLines()
-  .prob2()
+  .prob2_smart()
 
 # check 123 == "./input/prob05.txt"
 #   .readFile()
