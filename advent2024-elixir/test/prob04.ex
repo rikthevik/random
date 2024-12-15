@@ -29,7 +29,7 @@ defmodule Grid do
   end
 
   def get(g, p) do
-    Map.get(g.map, p)
+    Map.get(g.map, p, "")
   end
 end
 
@@ -69,7 +69,20 @@ defmodule Prob do
   end
 
   def run2(rows) do
+    g = rows
+    |> Grid.new()
 
+    points = g
+    |> Grid.points()
+    |> Enum.filter(fn p -> Grid.get(g, p) == "A" end)  # gotta start with A
+    |> Enum.filter(fn p -> found_p2(g, p) end)
+    |> Enum.count()
+  end
+
+  def found_p2(g, {x, y}) do
+    a = Grid.get(g, {x-1, y-1}) <> Grid.get(g, {x+1, y+1})
+    b = Grid.get(g, {x-1, y+1}) <> Grid.get(g, {x+1, y-1})
+    (a == "MS" or a == "SM") and (b == "MS" or b == "SM")
   end
 end
 
@@ -105,9 +118,9 @@ MXMXAXMASX
     |> Parse.rows()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
+    assert 9 == input
+    |> Parse.rows()
+    |> Prob.run2()
   end
 
   test "part1" do
@@ -116,11 +129,10 @@ MXMXAXMASX
     |> Prob.run1()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input04.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run2()
-  # end
-
+  test "part2" do
+    assert 1822 == File.read!("test/input04.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
 
 end
