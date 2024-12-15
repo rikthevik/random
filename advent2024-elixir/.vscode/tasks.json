@@ -13,7 +13,15 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"label": "mix: Run tests in current file"
+			"label": "mix: Run tests in current file",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			}
 		}
 	]
 }
