@@ -1,8 +1,11 @@
 
 defmodule Machine do
   # Having a feeling we'll be building off a machine like this
+  # Let's build this in a way that it'll keep its own state
+  use GenServer
   defstruct register: 0, mul_enabled: true
 
+  # "Business" logic
   def eval({"mul", l, r}, m) do
     if m.mul_enabled do
       %Machine{m|
@@ -22,6 +25,30 @@ defmodule Machine do
       mul_enabled: false
     }
   end
+
+  # Server interface
+  def init(_) do
+    {:ok, %Machine{}}
+  end
+  def start_link(default) do
+    GenServer.start_link(__MODULE__, default, name: MachineRef)
+  end
+  def handle_cast({:instruction, inst}, m) do
+    {:noreply, eval(inst, m)}
+  end
+  def handle_call({:get}, _from, m) do
+    {:reply, m, m}
+  end
+
+  # Client interface
+  def process_instruction(inst) do
+    GenServer.cast(MachineRef, {:instruction, inst})
+  end
+
+  def get() do
+    GenServer.call(MachineRef, {:get})
+  end
+
 end
 
 defmodule Prob do
@@ -38,10 +65,12 @@ defmodule Prob do
 
 
   def run2(s) do
-    m = Parse.parse_instructions(s)
-    |> Enum.reduce(%Machine{}, &Machine.eval/2)
+    Parse.parse_instructions(s)
+    |> Enum.map(&Machine.process_instruction/1)
 
+    m = Machine.get()
     m.register
+
   end
 end
 
@@ -72,6 +101,24 @@ end
 
 defmodule Tests do
   use ExUnit.Case
+
+  setup do
+    _pid = start_supervised!(Machine)
+    :ok
+  end
+
+  test "genserver-works" do
+    Machine.process_instruction({"mul", 3, 7})
+    m = Machine.get()
+    assert 21 == m.register
+  end
+
+  test "genserver-works2" do
+    Machine.process_instruction({"mul", 3, 71})
+    m = Machine.get()
+    assert 213 == m.register
+  end
+
 
   test "example1" do
     input = """
