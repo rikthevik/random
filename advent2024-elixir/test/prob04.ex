@@ -23,20 +23,48 @@ defmodule Grid do
     }
   end
   def points(g) do
-    g
+    g.map
     |> Map.keys()
     |> Enum.sort()
   end
 
   def get(g, p) do
-    Map.get(g, p)
+    Map.get(g.map, p)
   end
 end
 
 defmodule Prob do
+  def found_mas?(g, {x, y}, {dx, dy}) do
+    Grid.get(g, {x + dx * 1, y + dy * 1}) == "M"
+    and Grid.get(g, {x + dx * 2, y + dy * 2}) == "A"
+    and Grid.get(g, {x + dx * 3, y + dy * 3}) == "S"
+  end
+
+  def found_xmas_count(g, p) do
+    directions = [
+      {+1, +0}, # right
+      {-1, +0}, # left
+      {+0, -1}, # up
+      {+0, +1}, # down
+      {+1, -1}, # upright
+      {-1, -1}, # upleft
+      {+1, +1}, # downright
+      {-1, +1}, # downleft
+    ]
+    directions
+    |> Enum.filter(fn d -> found_mas?(g, p, d) end)
+    |> Enum.count()
+  end
+
   def run1(rows) do
     g = rows
     |> Grid.new()
+
+    points = g
+    |> Grid.points()
+    |> Enum.filter(fn p -> Grid.get(g, p) == "X" end)  # gotta start with X
+    |> Enum.map(fn p -> found_xmas_count(g, p) end)
+    |> Enum.sum()
 
   end
 
@@ -51,6 +79,7 @@ defmodule Parse do
     |> String.trim()
     |> String.split("\n")
     |> Enum.map(&String.graphemes/1)
+    # |> Enum.take(1)
   end
 end
 
@@ -81,14 +110,14 @@ MXMXAXMASX
     # |> Prob.run2()
   end
 
-  # test "part1" do
-  #   assert 1722302 == File.read!("test/input01.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run1()
-  # end
+  test "part1" do
+    assert 2401 == File.read!("test/input04.txt")
+    |> Parse.rows()
+    |> Prob.run1()
+  end
 
   # test "part2" do
-  #   assert 20373490 == File.read!("test/input01.txt")
+  #   assert 20373490 == File.read!("test/input04.txt")
   #   |> Parse.rows()
   #   |> Prob.run2()
   # end
