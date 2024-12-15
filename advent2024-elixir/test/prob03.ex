@@ -1,14 +1,14 @@
 
 
 defmodule Prob do
-  def evaluate_mul([_, l, r]) do
+  def evaluate([_, "mul", l, r]) do
     String.to_integer(l) * String.to_integer(r)
   end
 
   def run1(s) do
-    ~r/mul\((\d+),(\d+)\)/
+    ~r/(mul)\((\d+),(\d+)\)/
     |> Regex.scan(s)
-    |> Enum.map(&evaluate_mul/1)
+    |> Enum.map(&evaluate/1)
     |> Enum.sum()
   end
 
