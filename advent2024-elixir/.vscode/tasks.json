@@ -15,7 +15,7 @@
 			},
 			"label": "mix: Run tests in current file",
 			"presentation": {
-				"echo": true,
+				"echo": false,
 				"reveal": "always",
 				"focus": true,
 				"panel": "dedicated",
