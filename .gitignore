@@ -3,3 +3,4 @@ foo
 out
 .elixir_ls
 *.dSYM
+.DS_Store
