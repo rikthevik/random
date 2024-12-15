@@ -1,4 +1,28 @@
 
+defmodule Machine do
+  # Having a feeling we'll be building off a machine like this
+  defstruct register: 0, mul_enabled: true
+
+  def eval({"mul", l, r}, m) do
+    if m.mul_enabled do
+      %Machine{m|
+        register: m.register + l * r,
+      }
+    else
+      m
+    end
+  end
+  def eval({"do"}, m) do
+    %Machine{m|
+      mul_enabled: true
+    }
+  end
+  def eval({"don't"}, m) do
+    %Machine{m|
+      mul_enabled: false
+    }
+  end
+end
 
 defmodule Prob do
   def evaluate([_, "mul", l, r]) do
@@ -12,8 +36,12 @@ defmodule Prob do
     |> Enum.sum()
   end
 
-  def run2(rows) do
 
+  def run2(s) do
+    m = Parse.parse_instructions(s)
+    |> Enum.reduce(%Machine{}, &Machine.eval/2)
+
+    m.register
   end
 end
 
@@ -22,8 +50,20 @@ defmodule Parse do
     s
   end
 
-  def make_row(s) do
+  def parse_match([_, _, "mul", l, r]) do
+    {"mul", String.to_integer(l), String.to_integer(r)}
+  end
+  def parse_match(["do()"|_]) do
+    {"do"}
+  end
+  def parse_match(["don't()"|_]) do
+    {"don't"}
+  end
 
+  def parse_instructions(s) do
+    ~r/((mul)\((\d+),(\d+)\)|(do|don't)\(\))/
+    |> Regex.scan(s)
+    |> Enum.map(&parse_match/1)
   end
 
 end
@@ -41,9 +81,12 @@ defmodule Tests do
     |> Parse.rows()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
+    input = """
+    xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+    """
+    assert 48 == input
+    |> Parse.rows()
+    |> Prob.run2()
   end
 
   test "part1" do
@@ -52,11 +95,10 @@ defmodule Tests do
     |> Prob.run1()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input01.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run2()
-  # end
-
+  test "part2" do
+    assert 107069718 == File.read!("test/input03.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
 
 end
