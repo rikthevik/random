@@ -13,7 +13,6 @@ defmodule Prob do
   def run1(rows) do
     rows
     |> Enum.map(&p1_is_safe/1)
-    |> IO.inspect()
     |> Enum.filter(fn a -> a end)
     |> Enum.count()
   end
@@ -56,7 +55,6 @@ defmodule Tests do
 """
     assert 2 == input
     |> Parse.rows()
-    |> IO.inspect
     |> Prob.run1()
 
     # assert 31 == input
