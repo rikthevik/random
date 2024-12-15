@@ -1,31 +1,30 @@
 
 
 defmodule Prob do
-  def run1({rulemap, rows}) do
+  def run1({rules, rows}) do
     # this tells us that k must be before v
-    rulemap
+    rules
     |> IO.inspect
 
     # so let's reverse all of the rows
     # and find rules that we'r in violation of
     rows
     |> Enum.map(&Enum.reverse/1)
-    |> Enum.filter(fn row -> p1_row_is_valid(rulemap, row) end)
+    |> Enum.filter(fn row -> p1_row_is_valid(rules, row) end)
     |> Enum.map(&middle_member/1)
     |> Enum.map(&String.to_integer/1)
     |> Enum.sum()
   end
 
-  def p1_row_is_valid(rulemap, []) do
+  def p1_row_is_valid(rules, []) do
     true
   end
-  def p1_row_is_valid(rulemap, [a|rest]) do
-    must_be_before = Map.get(rulemap, a)
-    if must_be_before do
-      (not Enum.member?(rest, must_be_before)) and p1_row_is_valid(rulemap, rest)
-    else
-      p1_row_is_valid(rulemap, rest)
-    end
+  def p1_row_is_valid(rules, [c|rest]) do
+    active_rules = rules
+    |> Enum.filter(fn {a, _b} -> c == a end)
+
+    (not Enum.any?(active_rules, fn {_a, b} -> Enum.member?(rest, b) end)) and p1_row_is_valid(rules, rest)
+
   end
 
   def middle_member(l) do
@@ -45,15 +44,14 @@ defmodule Parse do
     [l, r] = s
     |> String.trim()
     |> String.split("\n\n")
-    rulemap = l
+    rules = l
     |> String.split("\n")
     |> Enum.map(&make_rule/1)
-    |> Map.new()
     rows = r
     |> String.split("\n")
     |> Enum.map(&make_row/1)
     # |> Enum.take(1)
-    {rulemap, rows}
+    {rules, rows}
   end
 
   def make_row(s) do
