@@ -39,13 +39,13 @@ defmodule Tests do
   end
 
   test "part1" do
-    assert 1722302 == File.read!("test/input01.txt")
+    assert 1722302 == File.read!("test/input00.txt")
     |> Parse.rows()
     |> Prob.run1()
   end
 
   test "part2" do
-    assert 20373490 == File.read!("test/input01.txt")
+    assert 20373490 == File.read!("test/input00.txt")
     |> Parse.rows()
     |> Prob.run2()
   end
