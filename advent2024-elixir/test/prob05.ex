@@ -29,7 +29,10 @@ defmodule Prob do
   end
 
   def middle_member(l) do
-    Enum.at(l, Kernel.floor(Enum.count(l) / 2))
+    Enum.at(l, middle_index(Enum.count(l)))
+  end
+  def middle_index(c) when rem(c, 2) == 1 do
+    Kernel.floor(c / 2)
   end
 
   # def run2(rows) do
@@ -112,15 +115,15 @@ defmodule Tests do
     # |> Prob.run2()
   end
 
-  # test "part1" do
-  #   assert 1722302 == File.read!("test/input05.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run1()
-  # end
+  test "part1" do
+    assert 1722302 == File.read!("test/input05.txt")
+    |> Parse.parse()
+    |> Prob.run1()
+  end
 
   # test "part2" do
   #   assert 20373490 == File.read!("test/input05.txt")
-  #   |> Parse.rows()
+  #   |> Parse.parse()
   #   |> Prob.run2()
   # end
 
