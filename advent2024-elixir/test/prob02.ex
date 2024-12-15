@@ -19,7 +19,33 @@ defmodule Prob do
 
   def run2(rows) do
     rows
+    |> Enum.map(&p2_is_safe/1)
+    |> Enum.filter(fn a -> a end)
+    |> Enum.count()
   end
+
+  def p2_is_safe(row) do
+    p2_is_safe_asc(row)
+      or p2_is_safe_asc(Enum.reverse(row))
+  end
+  def p2_is_safe_asc(row) do
+    p1_is_safe_asc(row)
+    or sublists(row)
+      |> Enum.map(&p1_is_safe_asc/1)
+      |> Enum.any?()
+  end
+
+  def sublists(row) do
+    # returns a list of lists, each one missing one original list element
+    sublists([], row)
+  end
+  def sublists(prefix, [_a]) do
+    [prefix]
+  end
+  def sublists(prefix, [a|rest]) do
+    [prefix ++ rest] ++ sublists(prefix ++ [a], rest)
+  end
+
 end
 
 defmodule Parse do
@@ -44,6 +70,16 @@ end
 defmodule Tests do
   use ExUnit.Case
 
+  test "functions" do
+    assert Prob.sublists([1, 2, 3, 4]) == [
+      [2, 3, 4],
+      [1, 3, 4],
+      [1, 2, 4],
+      [1, 2, 3],
+    ]
+
+  end
+
   test "example1" do
     input = """
 7 6 4 2 1
@@ -57,9 +93,9 @@ defmodule Tests do
     |> Parse.rows()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
+    assert 4 == input
+    |> Parse.rows()
+    |> Prob.run2()
   end
 
   test "part1" do
@@ -68,11 +104,11 @@ defmodule Tests do
     |> Prob.run1()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input01.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run2()
-  # end
+  test "part2" do
+    assert 644 == File.read!("test/input02.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
 
 
 end
