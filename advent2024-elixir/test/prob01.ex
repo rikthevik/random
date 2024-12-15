@@ -22,6 +22,18 @@ defmodule Prob do
     |> Enum.map(&distance/1)
     |> Enum.sum()
   end
+
+  def run2(rows) do
+    [left, right] = rows
+    |> to_parallel_lists()
+
+    occurrances = right
+    |> Enum.frequencies()
+
+    left
+    |> Enum.map(fn a -> a * Map.get(occurrances, a, 0) end)
+    |> Enum.sum()
+  end
 end
 
 defmodule Parse do
@@ -35,9 +47,7 @@ defmodule Parse do
   def make_row(s) do
     s
     |> String.split(~r/ +/)
-    |> IO.inspect
     |> Enum.map(&String.to_integer/1)
-    |> IO.inspect
     |> List.to_tuple()
   end
 
@@ -47,7 +57,8 @@ end
 
 defmodule Tests do
   use ExUnit.Case
-  test "example" do
+
+  test "example1" do
     input = """
 3   4
 4   3
@@ -59,6 +70,10 @@ defmodule Tests do
     assert 11 == input
     |> Parse.rows()
     |> Prob.run1()
+
+    assert 31 == input
+    |> Parse.rows()
+    |> Prob.run2()
   end
 
   test "part1" do
@@ -66,5 +81,12 @@ defmodule Tests do
     |> Parse.rows()
     |> Prob.run1()
   end
+
+  test "part2" do
+    assert 20373490 == File.read!("test/input01.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
+
 
 end
