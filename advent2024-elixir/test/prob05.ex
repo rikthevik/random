@@ -3,8 +3,6 @@
 defmodule Prob do
   def run1({rules, rows}) do
     # this tells us that k must be before v
-    rules
-    |> IO.inspect
 
     # so let's reverse all of the rows
     # and find rules that we'r in violation of
@@ -16,7 +14,7 @@ defmodule Prob do
     |> Enum.sum()
   end
 
-  def p1_row_is_valid(rules, []) do
+  def p1_row_is_valid(_rules, []) do
     true
   end
   def p1_row_is_valid(rules, [c|rest]) do
@@ -34,9 +32,55 @@ defmodule Prob do
     Kernel.floor(c / 2)
   end
 
-  # def run2(rows) do
+  def run2({rules, rows}) do
+    rows
+    |> Enum.map(&Enum.reverse/1)
+    |> Enum.filter(fn row -> not p1_row_is_valid(rules, row) end)
+    # |> Enum.take(1)  # temp
+    |> Enum.map(fn row -> p2_sort_row(rules, row) end)
+    |> Enum.map(&middle_member/1)
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.sum()
+  end
 
-  # end
+  def p2_sort_row(rules, row) do
+    # row |> IO.inspect(label: "row")
+    relevant_rules = for c <- row do
+      rules
+      |> Enum.filter(fn {a, _b} -> a == c end)
+    end
+    |> List.flatten()
+    |> Enum.filter(fn {_a, b} -> Enum.member?(row, b) end)
+    # |> IO.inspect(label: "relevant rules")
+
+    p2_next_item(relevant_rules, row)
+    # |> IO.inspect(label: "sorted")
+  end
+
+  def p2_next_item([], []) do
+    []
+  end
+  def p2_next_item(rules, items) do
+    freq = rules
+    |> Enum.map(fn {_a, b} -> b end)
+    |> Enum.frequencies()
+
+    least_incoming = items
+    |> Enum.map(fn item -> {item, Map.get(freq, item, 0)} end)
+    |> Enum.min_by(fn {_a, b} -> b end)
+    |> elem(0)
+    # |> IO.inspect(label: "least_incoming")
+
+    remaining_rules = rules
+    |> Enum.filter(fn {_a, b} -> b != least_incoming end)
+    # |> IO.inspect(label: "remaining_rules")
+
+    remaining_items = items
+    |> Enum.filter(fn a -> a != least_incoming end)
+
+    [least_incoming|p2_next_item(remaining_rules, remaining_items)]
+
+  end
 end
 
 defmodule Parse do
@@ -108,22 +152,22 @@ defmodule Tests do
     |> Parse.parse()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
+    assert 123 == input
+    |> Parse.parse()
+    |> Prob.run2()
   end
 
   test "part1" do
-    assert 1722302 == File.read!("test/input05.txt")
+    assert 5948 == File.read!("test/input05.txt")
     |> Parse.parse()
     |> Prob.run1()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input05.txt")
-  #   |> Parse.parse()
-  #   |> Prob.run2()
-  # end
+  test "part2" do
+    assert 3062 == File.read!("test/input05.txt")
+    |> Parse.parse()
+    |> Prob.run2()
+  end
 
 
 end
