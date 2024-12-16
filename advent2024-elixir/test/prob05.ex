@@ -57,10 +57,13 @@ defmodule Prob do
     # |> IO.inspect(label: "sorted")
   end
 
+  # Basically a topological sort. Look for the item with the least number
+  # of incoming rules, and then remove that item and the corresponding rules
   def p2_next_item([], []) do
     []
   end
   def p2_next_item(rules, items) do
+
     freq = rules
     |> Enum.map(fn {_a, b} -> b end)
     |> Enum.frequencies()
@@ -99,6 +102,9 @@ defmodule Parse do
   end
 
   def make_row(s) do
+    # I was going to convert these to integers, but Elixir(Erlang) charlists
+    # like to display lists of ascii-valid ints in a goofy way, so let's stick
+    # with strings until we need the ints for something.
     s
     |> String.split(",")
     # |> Enum.map(&String.to_integer/1)
