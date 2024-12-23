@@ -12,7 +12,7 @@ class Segment:
     def __repr__(self):
         return "{idx=%d len=%d file_id=%s}" % (self.idx, self.len, self.file_id)
 
-def prob1(s):
+def prob2(s):
     segments = []
     file_ids = itertools.count(0)
     idx = 0
@@ -27,37 +27,34 @@ def prob1(s):
     print(segments)
 
     iteration = itertools.count(0)
-    d = collections.deque(segments)
-    result = []
-    try:
-        while True:
-            # print("iteration=%s" % next(iteration), display(d), ":::", display(result))
-            free = d.popleft()
-            if free.file_id != FREE:
-                result.append(free)
+
+    fulls = [s for s in segments if s.file_id != FREE]
+    frees = [s for s in segments if s.file_id == FREE]
+
+    result_fulls = []
+    while fulls:
+        full = fulls.pop()
+
+        result2 = list(sorted(result_fulls + frees, key=lambda seg: seg.idx))
+        print("full=", full, "result2=", display(result2))
+        for free in frees:
+            if full.len == free.len:
+                print("exact")
+                free.len = 0
+                full.idx = free.idx
+                break
+            elif full.len < free.len:
+                print("lt")
+                full.idx = free.idx
+                free.idx += full.len
+                free.len -= full.len
+                break
             else:
-                last = d.pop()
-                while last.file_id == FREE:
-                    last = d.pop()
-                # print("!!! free=", free, "last=", last)
-                if last.len == free.len:
-                    # same length, swap it out
-                    # print("!!! freeeq")
-                    result.append(Segment(free.idx, free.len, last.file_id))
-                elif last.len < free.len:
-                    # print("!!! freelt")
-                    # remove the space from the current free chunk and put it back
-                    result.append(Segment(free.idx, last.len, last.file_id))
-                    d.appendleft(Segment(free.idx + last.len, free.len - last.len, FREE))
-                elif last.len > free.len:
-                    # print("!!! freegt")
-                    result.append(Segment(free.idx, free.len, last.file_id))
-                    d.append(Segment(last.idx, last.len - free.len, last.file_id))
+                pass
 
-    except IndexError:
-        pass
-
-
+        result_fulls.append(full)
+                
+    result = list(sorted(result_fulls + frees, key=lambda seg: seg.idx))
     print("!!", result)
     print("@@", display(result))
     print("##", checksum(result))
@@ -69,7 +66,8 @@ def display(segments):
 def checksum(segments):
     tot = 0
     for i, file_id in enumerate(yield_file_ids(segments)):
-        tot += i * file_id
+        if file_id != FREE:
+            tot += i * file_id
     return tot
 
 def yield_file_ids(segments):
@@ -77,8 +75,7 @@ def yield_file_ids(segments):
         for i in range(s.len):
             yield s.file_id
 
-# assert 1928 == prob1("""12345""")
-# assert 1928 == prob1("""2333133121414131402""")
-assert 1928 == prob1(open("input09.txt", "r").read().strip())
+assert 2858 == prob2("""2333133121414131402""")
+# assert 1928 == prob2(open("input09.txt", "r").read().strip())
 
 
