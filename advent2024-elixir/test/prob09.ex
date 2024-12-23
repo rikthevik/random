@@ -1,25 +1,30 @@
 
 
 defmodule Prob do
+  def drop_zero_len(l) do
+    l
+    |> Enum.filter(fn {_, len, _} -> len > 0 end)
+  end
+
+
   def run1(rows) do
-    {a, b} = rows
-    |> Enum.map_reduce(0, &something/2)
-    |> IO.inspect()
-  end
-
-  def something({:file, id, len}, acc) do
-    {}
-  end
-
-  def something(row, acc) do
-    {row, acc}
+    rows
+    |> drop_zero_len()
+    |> traverse()
 
   end
 
-
-  def run2(rows) do
+  def traverse([s={_, _, {:file, _}}|rest]) do
+    [s|traverse(rest)]
+  end
+  def traverse([s|rest]) do
 
   end
+
+
+  # def run2(rows) do
+
+  # end
 end
 
 defmodule Parse do
@@ -87,9 +92,9 @@ defmodule Tests do
     input = """
 2333133121414131402
 """
-    # assert 1928 == input
-    # |> Parse.rows()
-    # |> Prob.run1()
+    assert 1928 == input
+    |> Parse.rows()
+    |> Prob.run1()
 
     # # assert 31 == input
     # |> Parse.rows()
