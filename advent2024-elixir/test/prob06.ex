@@ -54,11 +54,18 @@ defmodule Dude do
     }
   end
 
+  def path_key(dude) do
+    {{dude.x, dude.y}, {dude.dx, dude.dy}}
+  end
+
   def p1_move(dude) do
-    {dude.x, dude.y} |> IO.inspect
-    next_pos = {dude.x + dude.dx, dude.y + dude.dy}
-    next_tile = Grid.get(dude.g, next_pos)
-    p1_try_move(dude, next_pos, next_tile)
+    if path_key(dude) in dude.path do
+      :loop
+    else
+      next_pos = {dude.x + dude.dx, dude.y + dude.dy}
+      next_tile = Grid.get(dude.g, next_pos)
+      p1_try_move(dude, next_pos, next_tile)
+    end
   end
 
   def p1_try_move(dude, _, "#") do
@@ -66,7 +73,7 @@ defmodule Dude do
     %Dude{dude|
       dx: dx,
       dy: dy,
-      path: [{dude.x, dude.y}|dude.path],
+      path: [path_key(dude)|dude.path],
     }
     |> p1_move()
   end
@@ -74,7 +81,7 @@ defmodule Dude do
     %Dude{dude|
       x: x,
       y: y,
-      path: [{dude.x, dude.y}|dude.path],
+      path: [path_key(dude)|dude.path],
     }
     |> p1_move()
   end
@@ -106,7 +113,7 @@ defmodule Prob do
     |> Dude.p1_move()
 
     d.path
-    |> IO.inspect(label: "path")
+    |> Enum.map(fn {p, _dir} -> p end)
     |> MapSet.new()
     |> Enum.count()
 
