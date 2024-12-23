@@ -85,9 +85,37 @@ defmodule Prob do
     |> Enum.count()
   end
 
-  # def run2(g) do
 
-  # end
+
+  def p2_antinodes({{ax, ay}, {bx, by}}) do
+    dx = bx - ax
+    dy = by - ay
+    # kinda gross. we don't have the bounds of the grid here, so let's just go
+    # 32 iterations and filter the out of bounds points later
+    l = for i <- 0..32 do
+      {ax - i * dx, ay - i * dy}
+    end
+    r = for i <- 0..32 do
+      {bx + i * dx, by + i * dy}
+    end
+    Enum.concat(l, r)
+  end
+
+  def run2(g) do
+    nodes = g
+    |> grid_nodes()
+
+    for node <- nodes do
+      g
+      |> grid_points(node)
+      |> pairs()
+      |> Enum.map(&p2_antinodes/1)
+    end
+    |> List.flatten()
+    |> Enum.filter(fn {x, y} -> x >= 0 and y >= 0 and x < g.w and y < g.h end)
+    |> MapSet.new()
+    |> Enum.count()
+  end
 end
 
 defmodule Parse do
@@ -123,22 +151,22 @@ defmodule Tests do
     # |> Parse.rows()
     # |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
-  end
-
-  test "part1" do
-    assert 323 == File.read!("test/input08.txt")
+    assert 34 == input
     |> Parse.rows()
-    |> Prob.run1()
+    |> Prob.run2()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input08.txt")
+  # test "part1" do
+  #   assert 323 == File.read!("test/input08.txt")
   #   |> Parse.rows()
-  #   |> Prob.run2()
+  #   |> Prob.run1()
   # end
+
+  test "part2" do
+    assert 20373490 == File.read!("test/input08.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
 
 
 end
