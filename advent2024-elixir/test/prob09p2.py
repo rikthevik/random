@@ -29,32 +29,37 @@ def prob2(s):
     iteration = itertools.count(0)
 
     fulls = [s for s in segments if s.file_id != FREE]
+    try_fulls = fulls.copy()
     frees = [s for s in segments if s.file_id == FREE]
 
     result_fulls = []
-    while fulls:
-        full = fulls.pop()
+    while try_fulls:
+        full = try_fulls.pop()
 
-        result2 = list(sorted(result_fulls + frees, key=lambda seg: seg.idx))
-        print("full=", full, "result2=", display(result2))
-        for free in frees:
-            if full.len == free.len:
-                print("exact")
-                free.len = 0
+        result2 = list(sorted(fulls + frees, key=lambda seg: seg.idx))
+        # print("full=", full, "result2=", display(result2))
+        for free in sorted(frees, key=lambda seg: seg.idx):
+            if free.idx > full.idx:
+                pass
+            elif full.len == free.len:
+                # print("exact", full)
+                # need to replace the free space if we move
+                frees.remove(free)
+                frees.append(Segment(full.idx, full.len, FREE))
                 full.idx = free.idx
                 break
             elif full.len < free.len:
-                print("lt")
+                # print("lt", full)
+                frees.append(Segment(full.idx, full.len, FREE))
                 full.idx = free.idx
                 free.idx += full.len
                 free.len -= full.len
+                # print("@@", frees)
                 break
             else:
                 pass
-
-        result_fulls.append(full)
                 
-    result = list(sorted(result_fulls + frees, key=lambda seg: seg.idx))
+    result = list(sorted(fulls + frees, key=lambda seg: seg.idx))
     print("!!", result)
     print("@@", display(result))
     print("##", checksum(result))
@@ -76,6 +81,6 @@ def yield_file_ids(segments):
             yield s.file_id
 
 assert 2858 == prob2("""2333133121414131402""")
-# assert 1928 == prob2(open("input09.txt", "r").read().strip())
+assert 1928 == prob2(open("input09.txt", "r").read().strip())
 
 
