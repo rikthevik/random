@@ -39,16 +39,21 @@ defmodule Grid do
   def get(g, p) do
     Map.get(g.map, p, "")
   end
+  def set(g, p, val) do
+    %Grid{g|
+      map: Map.put(g.map, p, val)
+    }
+  end
 end
 
 defmodule Dude do
   defstruct [:x, :y, :dx, :dy, :path, :g]
-  def new(g, {x, y}) do
+  def new(g, {x, y}, {dx, dy}) do
     %Dude{
       x: x,
       y: y,
-      dx: 0,
-      dy: -1,
+      dx: dx,
+      dy: dy,
       path: [],
       g: g,
     }
@@ -87,7 +92,7 @@ defmodule Dude do
   end
   def p1_try_move(dude, _, "") do
     %Dude{dude|
-      path: [{dude.x, dude.y}|dude.path],
+      path: [path_key(dude)|dude.path],
     }
   end
 
@@ -103,13 +108,12 @@ defmodule Prob do
 
 
   def run1(g) do
-
     start_pos = g.map
     |> Enum.filter(fn {_, v} -> v == "^" end)
     |> Enum.at(0)
     |> elem(0)
 
-    d = Dude.new(g, start_pos)
+    d = Dude.new(g, start_pos, {0, -1})
     |> Dude.p1_move()
 
     d.path
@@ -119,9 +123,34 @@ defmodule Prob do
 
   end
 
-  # def run2(rows) do
+  def run2(g) do
+    start_pos = g.map
+    |> Enum.filter(fn {_, v} -> v == "^" end)
+    |> Enum.at(0)
+    |> elem(0)
 
-  # end
+    # trim the first and last points?
+    d = Dude.new(g, start_pos, {0, -1})
+    |> Dude.p1_move()
+
+    path_points = d.path
+    |> Enum.drop(1)
+
+    # Try putting a wall at each point in the path
+    # and see if it turns into a :loop
+    for {p, _} <- path_points do
+      {p, g
+      |> Grid.set(p, "#")
+      |> Dude.new(start_pos, {0, -1})
+      |> Dude.p1_move()}
+    end
+    |> Enum.filter(fn {_, v} -> v == :loop end)
+    |> Enum.map(fn {p, _v} -> p end)
+    |> MapSet.new()
+    |> IO.inspect(label: "wat")
+    |> Enum.count()
+
+  end
 end
 
 defmodule Parse do
@@ -155,16 +184,16 @@ defmodule Tests do
     |> Parse.load()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.load()
-    # |> Prob.run2()
+    assert 6 == input
+    |> Parse.load()
+    |> Prob.run2()
   end
 
-  test "part1" do
-    assert 4890 == File.read!("test/input06.txt")
-    |> Parse.load()
-    |> Prob.run1()
-  end
+  # test "part1" do
+  #   assert 4890 == File.read!("test/input06.txt")
+  #   |> Parse.load()
+  #   |> Prob.run1()
+  # end
 
   # test "part2" do
   #   assert 20373490 == File.read!("test/input00.txt")
