@@ -68,11 +68,11 @@ defmodule Tests do
     # |> Prob.run2()
   end
 
-  # test "part1" do
-  #   assert 1722302 == File.read!("test/input07.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run1()
-  # end
+  test "part1" do
+    assert 2941973819040 == File.read!("test/input07.txt")
+    |> Parse.rows()
+    |> Prob.run1()
+  end
 
   # test "part2" do
   #   assert 20373490 == File.read!("test/input07.txt")
