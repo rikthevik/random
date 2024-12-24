@@ -63,10 +63,17 @@ defmodule Prob do
   end
 
   def run1(g) do
-    start_points = g
+    g
     |> fetch_start_points()
-    # |> Enum.take(1)  # tmp
-    |> Enum.map(fn p -> p1_start_walk(g, p) end)
+    |> Enum.map(fn p -> p1_start_walk(g, p, :p1) end)
+    |> IO.inspect
+    |> Enum.sum()
+  end
+
+  def run2(g) do
+    g
+    |> fetch_start_points()
+    |> Enum.map(fn p -> p1_start_walk(g, p, :p2) end)
     |> IO.inspect
     |> Enum.sum()
   end
@@ -77,24 +84,26 @@ defmodule Prob do
     Grid.get(g, next) != nil and Grid.get(g, here) + 1 == Grid.get(g, next)
   end
 
-  def p1_start_walk(g, p) do
-    p1_walk(g, p, 0, [])
+  def p1_start_walk(g, p, mode) do
+    p1_walk(g, p, 0, [], mode)
     |> List.flatten()
     |> MapSet.new()
     |> Enum.count()
   end
 
-  def p1_walk(_, here, 9, _path) do
+  def p1_walk(_, here, 9, _path, :p1) do
     # Just return the 9 point
     here
-    # [here|path]
-    # |> Enum.reverse()
-    # |> List.to_tuple()
   end
-  def p1_walk(g, here, height, path) do
+  def p1_walk(_, here, 9, path, :p2) do
+    [here|path]
+    |> Enum.reverse()
+    |> List.to_tuple()
+  end
+  def p1_walk(g, here, height, path, mode) do
     # {here, height, path} |> IO.inspect()
     for p <- points_near(here), p1_should_walk?(g, here, p) do
-      p1_walk(g, p, height+1, [here|path])
+      p1_walk(g, p, height+1, [here|path], mode)
     end
   end
 
@@ -160,22 +169,21 @@ defmodule Tests do
     |> Parse.rows()
     |> Prob.run1()
 
-    # assert 31 == input
-    # |> Parse.rows()
-    # |> Prob.run2()
+    assert 81 == input
+    |> Parse.rows()
+    |> Prob.run2()
   end
 
   test "part1" do
-    assert 1722302 == File.read!("test/input10.txt")
+    assert 688 == File.read!("test/input10.txt")
     |> Parse.rows()
     |> Prob.run1()
   end
 
-  # test "part2" do
-  #   assert 20373490 == File.read!("test/input10.txt")
-  #   |> Parse.rows()
-  #   |> Prob.run2()
-  # end
-
+  test "part2" do
+    assert 20373490 == File.read!("test/input10.txt")
+    |> Parse.rows()
+    |> Prob.run2()
+  end
 
 end
