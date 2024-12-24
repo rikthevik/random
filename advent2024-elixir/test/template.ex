@@ -1,4 +1,38 @@
 
+defmodule Grid do
+  # A grid is a {x, y} -> char mapping
+  # Conventions: {x, y} = p
+  # References to a grid are called g
+
+  defstruct [:map, :w, :h]
+
+  def load(s) do
+    s
+    |> String.trim()
+    |> String.split("\n")
+    |> Enum.map(&String.graphemes/1)
+    |> new()
+  end
+
+  def new(rows) do
+    h = rows
+    |> Enum.count()
+    w = rows
+    |> Enum.at(0)
+    |> Enum.count()
+    map = for {row, y} <- Enum.with_index(rows), {char, x} <- Enum.with_index(row), into: %{} do
+      {{x, y}, char}
+    end
+
+    %Grid{
+      map: map,
+      w: w,
+      h: h,
+    }
+  end
+end
+
+
 defmodule State do
   # Repeatable way to store state in between things
   use GenServer
