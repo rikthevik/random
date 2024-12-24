@@ -181,7 +181,7 @@ defmodule Tests do
   end
 
   test "part2" do
-    assert 20373490 == File.read!("test/input10.txt")
+    assert 1459 == File.read!("test/input10.txt")
     |> Parse.rows()
     |> Prob.run2()
   end
