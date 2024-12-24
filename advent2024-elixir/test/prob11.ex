@@ -20,6 +20,8 @@ defmodule Prob do
   def p1_go_wrapper(iter, rows) do
     result = p1_go(rows)
 
+    IO.inspect("after iter=#{iter}")
+
     # result
     # |> List.flatten()
     # |> Enum.map(&Integer.to_string/1)
@@ -39,13 +41,6 @@ defmodule Prob do
     rule(a)
   end
 
-  def evaluate_tree(l) when is_list(l) do
-    l
-    |> Enum.map(&evaluate_tree/1)
-    |> Enum.sum()
-  end
-  def evaluate_tree(i) do i end
-
   def run1(rows, iterations) do
     rows
     |> IO.inspect(label: "start")
@@ -58,11 +53,6 @@ defmodule Prob do
     |> Enum.count()
   end
 
-
-
-  def run2(rows) do
-
-  end
 end
 
 defmodule Parse do
@@ -106,11 +96,11 @@ defmodule Tests do
     |> Prob.run1(25)
   end
 
-#   test "part2" do
-#     assert 20373490 == File.read!("test/input11.txt")
-#     |> Parse.rows()
-#     |> Prob.run2()
-#   end
+  test "part2" do
+    assert 20373490 == File.read!("test/input11.txt")
+    |> Parse.rows()
+    |> Prob.run1(75)
+  end
 
 
 end
