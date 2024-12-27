@@ -30,28 +30,56 @@ defmodule Grid do
       h: h,
     }
   end
+
+  def set(g, k, v) do
+    %Grid{g|
+      map: Map.put(k, v),
+    }
+  end
+  def popfirst(g) do
+    [first] = g.map
+    |> Enum.keys()
+    |> Enum.take(1)
+    %Grid{g|
+      map: Map.delete(g.map)
+    }
+  end
 end
 
 
 defmodule Prob do
-  def run1(rows) do
+  def points_near({x, y}) do
+    [
+      {x+1, y},
+      {x-1, y},
+      {x, y-1},
+      {x, y+1},
+    ]
+  end
+
+  def find_regions(g) do
+    [point] = g.map
+    |> Map.keys()
+    |> Enum.take(1)
+
 
   end
 
-  def run2(rows) do
 
+  def run1(g) do
+    find_regions(g)
   end
+
+  # def run2(rows) do
+
+  # end
 end
 
 defmodule Parse do
   def rows(s) do
-
+    s
+    |> Grid.load()
   end
-
-  def make_row(s) do
-
-  end
-
 end
 
 
@@ -66,7 +94,12 @@ defmodule Tests do
 
   test "example1" do
     input = """
- """
+OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO
+"""
     assert 11 == input
     |> Parse.rows()
     |> Prob.run1()
